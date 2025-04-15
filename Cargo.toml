@@ -24,12 +24,25 @@ members = [
 	"client/db",
 	"client/storage",
 	"client/mapping-sync",
+	"client/deepsafe/evm-tracing",
+	"client/deepsafe/rpc-core/types",
+	"client/deepsafe/rpc-core/trace",
+	"client/deepsafe/rpc-core/debug",
+	"client/deepsafe/rpc-core/txpool",
+	"client/deepsafe/rpc/debug",
+	"client/deepsafe/rpc/trace",
+	"client/deepsafe/rpc/txpool",
 	"primitives/account",
 	"primitives/consensus",
 	"primitives/dynamic-fee",
 	"primitives/evm",
 	"primitives/rpc",
 	"primitives/self-contained",
+	"primitives/deepsafe/ext",
+	"primitives/deepsafe/rpc/evm-tracing-events",
+	"primitives/deepsafe/rpc/debug",
+	"primitives/deepsafe/rpc/txpool",
+	"runtime/evm-tracer",
 	"template/node",
 	"template/runtime",
 	"precompiles",
@@ -52,6 +65,9 @@ environmental = { version = "1.1.4", default-features = false }
 ethereum = { version = "0.15.0", default-features = false }
 ethereum-types = { version = "0.14.1", default-features = false }
 evm = { version = "0.41.1", default-features = false }
+evm-gasometer = { version = "0.41.0", default-features = false }
+evm-runtime = { version = "0.41.0", default-features = false }
+
 futures = "0.3.30"
 hash-db = { version = "0.16.0", default-features = false }
 hex = { version = "0.4.3", default-features = false, features = ["alloc"] }
@@ -74,84 +90,89 @@ similar-asserts = "1.5.0"
 sqlx = { version = "0.7.3", default-features = false, features = ["macros"] }
 thiserror = "1.0"
 tokio = "1.35.1"
-
+sha3 = "0.10"
+tracing = "0.1.34"
+parity-scale-codec = { version = "3.2.2", default-features = false, features = [
+	"derive",
+] }
 # Substrate Client
-sc-basic-authorship = { git = "https://github.com/paritytech/polkadot-sdk", branch = "release-polkadot-v1.6.0" }
-sc-block-builder = { git = "https://github.com/paritytech/polkadot-sdk", branch = "release-polkadot-v1.6.0" }
-sc-chain-spec = { git = "https://github.com/paritytech/polkadot-sdk", branch = "release-polkadot-v1.6.0" }
-sc-cli = { git = "https://github.com/paritytech/polkadot-sdk", branch = "release-polkadot-v1.6.0", default-features = false }
-sc-client-api = { git = "https://github.com/paritytech/polkadot-sdk", branch = "release-polkadot-v1.6.0" }
-sc-client-db = { git = "https://github.com/paritytech/polkadot-sdk", branch = "release-polkadot-v1.6.0", default-features = false }
-sc-consensus = { git = "https://github.com/paritytech/polkadot-sdk", branch = "release-polkadot-v1.6.0" }
-sc-consensus-aura = { git = "https://github.com/paritytech/polkadot-sdk", branch = "release-polkadot-v1.6.0" }
-sc-consensus-grandpa = { git = "https://github.com/paritytech/polkadot-sdk", branch = "release-polkadot-v1.6.0" }
-sc-consensus-manual-seal = { git = "https://github.com/paritytech/polkadot-sdk", branch = "release-polkadot-v1.6.0" }
-sc-executor = { git = "https://github.com/paritytech/polkadot-sdk", branch = "release-polkadot-v1.6.0" }
-sc-keystore = { git = "https://github.com/paritytech/polkadot-sdk", branch = "release-polkadot-v1.6.0" }
-sc-network = { git = "https://github.com/paritytech/polkadot-sdk", branch = "release-polkadot-v1.6.0" }
-sc-network-common = { git = "https://github.com/paritytech/polkadot-sdk", branch = "release-polkadot-v1.6.0" }
-sc-network-sync = { git = "https://github.com/paritytech/polkadot-sdk", branch = "release-polkadot-v1.6.0" }
-sc-offchain = { git = "https://github.com/paritytech/polkadot-sdk", branch = "release-polkadot-v1.6.0" }
-sc-rpc = { git = "https://github.com/paritytech/polkadot-sdk", branch = "release-polkadot-v1.6.0" }
-sc-rpc-api = { git = "https://github.com/paritytech/polkadot-sdk", branch = "release-polkadot-v1.6.0" }
-sc-service = { git = "https://github.com/paritytech/polkadot-sdk", branch = "release-polkadot-v1.6.0", default-features = false }
-sc-telemetry = { git = "https://github.com/paritytech/polkadot-sdk", branch = "release-polkadot-v1.6.0" }
-sc-transaction-pool = { git = "https://github.com/paritytech/polkadot-sdk", branch = "release-polkadot-v1.6.0" }
-sc-transaction-pool-api = { git = "https://github.com/paritytech/polkadot-sdk", branch = "release-polkadot-v1.6.0" }
-sc-utils = { git = "https://github.com/paritytech/polkadot-sdk", branch = "release-polkadot-v1.6.0" }
+sc-basic-authorship = { git = "https://github.com/deepsafe/polkadot-sdk", branch = "deepsafe" }
+sc-block-builder = { git = "https://github.com/deepsafe/polkadot-sdk", branch = "deepsafe" }
+sc-chain-spec = { git = "https://github.com/deepsafe/polkadot-sdk", branch = "deepsafe" }
+sc-cli = { git = "https://github.com/deepsafe/polkadot-sdk", branch = "deepsafe", default-features = false }
+sc-client-api = { git = "https://github.com/deepsafe/polkadot-sdk", branch = "deepsafe" }
+sc-client-db = { git = "https://github.com/deepsafe/polkadot-sdk", branch = "deepsafe", default-features = false }
+sc-consensus = { git = "https://github.com/deepsafe/polkadot-sdk", branch = "deepsafe" }
+sc-consensus-aura = { git = "https://github.com/deepsafe/polkadot-sdk", branch = "deepsafe" }
+sc-consensus-grandpa = { git = "https://github.com/deepsafe/polkadot-sdk", branch = "deepsafe" }
+sc-consensus-manual-seal = { git = "https://github.com/deepsafe/polkadot-sdk", branch = "deepsafe" }
+sc-executor = { git = "https://github.com/deepsafe/polkadot-sdk", branch = "deepsafe" }
+sc-keystore = { git = "https://github.com/deepsafe/polkadot-sdk", branch = "deepsafe" }
+sc-network = { git = "https://github.com/deepsafe/polkadot-sdk", branch = "deepsafe" }
+sc-network-common = { git = "https://github.com/deepsafe/polkadot-sdk", branch = "deepsafe" }
+sc-network-sync = { git = "https://github.com/deepsafe/polkadot-sdk", branch = "deepsafe" }
+sc-offchain = { git = "https://github.com/deepsafe/polkadot-sdk", branch = "deepsafe" }
+sc-rpc = { git = "https://github.com/deepsafe/polkadot-sdk", branch = "deepsafe" }
+sc-rpc-api = { git = "https://github.com/deepsafe/polkadot-sdk", branch = "deepsafe" }
+sc-service = { git = "https://github.com/deepsafe/polkadot-sdk", branch = "deepsafe", default-features = false }
+sc-telemetry = { git = "https://github.com/deepsafe/polkadot-sdk", branch = "deepsafe" }
+sc-transaction-pool = { git = "https://github.com/deepsafe/polkadot-sdk", branch = "deepsafe" }
+sc-transaction-pool-api = { git = "https://github.com/deepsafe/polkadot-sdk", branch = "deepsafe" }
+sc-utils = { git = "https://github.com/deepsafe/polkadot-sdk", branch = "deepsafe" }
 # Substrate Primitive
-sp-api = { git = "https://github.com/paritytech/polkadot-sdk", branch = "release-polkadot-v1.6.0", default-features = false }
-sp-block-builder = { git = "https://github.com/paritytech/polkadot-sdk", branch = "release-polkadot-v1.6.0", default-features = false }
-sp-blockchain = { git = "https://github.com/paritytech/polkadot-sdk", branch = "release-polkadot-v1.6.0" }
-sp-consensus = { git = "https://github.com/paritytech/polkadot-sdk", branch = "release-polkadot-v1.6.0" }
-sp-consensus-aura = { git = "https://github.com/paritytech/polkadot-sdk", branch = "release-polkadot-v1.6.0", default-features = false }
-sp-consensus-grandpa = { git = "https://github.com/paritytech/polkadot-sdk", branch = "release-polkadot-v1.6.0", default-features = false }
-sp-core = { git = "https://github.com/paritytech/polkadot-sdk", branch = "release-polkadot-v1.6.0", default-features = false }
-sp-core-hashing = { git = "https://github.com/paritytech/polkadot-sdk", branch = "release-polkadot-v1.6.0", default-features = false }
-sp-core-hashing-proc-macro = { git = "https://github.com/paritytech/polkadot-sdk", branch = "release-polkadot-v1.6.0", default-features = false }
-sp-database = { git = "https://github.com/paritytech/polkadot-sdk", branch = "release-polkadot-v1.6.0" }
-sp-externalities = { git = "https://github.com/paritytech/polkadot-sdk", branch = "release-polkadot-v1.6.0", default-features = false }
-sp-genesis-builder = { git = "https://github.com/paritytech/polkadot-sdk", branch = "release-polkadot-v1.6.0", default-features = false }
-sp-inherents = { git = "https://github.com/paritytech/polkadot-sdk", branch = "release-polkadot-v1.6.0", default-features = false }
-sp-io = { git = "https://github.com/paritytech/polkadot-sdk", branch = "release-polkadot-v1.6.0", default-features = false }
-sp-keyring = { git = "https://github.com/paritytech/polkadot-sdk", branch = "release-polkadot-v1.6.0" }
-sp-offchain = { git = "https://github.com/paritytech/polkadot-sdk", branch = "release-polkadot-v1.6.0", default-features = false }
-sp-runtime = { git = "https://github.com/paritytech/polkadot-sdk", branch = "release-polkadot-v1.6.0", default-features = false }
-sp-runtime-interface = { git = "https://github.com/paritytech/polkadot-sdk", branch = "release-polkadot-v1.6.0", default-features = false }
-sp-session = { git = "https://github.com/paritytech/polkadot-sdk", branch = "release-polkadot-v1.6.0", default-features = false }
-sp-state-machine = { git = "https://github.com/paritytech/polkadot-sdk", branch = "release-polkadot-v1.6.0", default-features = false }
-sp-std = { git = "https://github.com/paritytech/polkadot-sdk", branch = "release-polkadot-v1.6.0", default-features = false }
-sp-storage = { git = "https://github.com/paritytech/polkadot-sdk", branch = "release-polkadot-v1.6.0", default-features = false }
-sp-timestamp = { git = "https://github.com/paritytech/polkadot-sdk", branch = "release-polkadot-v1.6.0", default-features = false }
-sp-transaction-pool = { git = "https://github.com/paritytech/polkadot-sdk", branch = "release-polkadot-v1.6.0", default-features = false }
-sp-version = { git = "https://github.com/paritytech/polkadot-sdk", branch = "release-polkadot-v1.6.0", default-features = false }
-sp-weights = { git = "https://github.com/paritytech/polkadot-sdk", branch = "release-polkadot-v1.6.0", default-features = false }
+sp-api = { git = "https://github.com/deepsafe/polkadot-sdk", branch = "deepsafe", default-features = false }
+sp-block-builder = { git = "https://github.com/deepsafe/polkadot-sdk", branch = "deepsafe", default-features = false }
+sp-blockchain = { git = "https://github.com/deepsafe/polkadot-sdk", branch = "deepsafe" }
+sp-consensus = { git = "https://github.com/deepsafe/polkadot-sdk", branch = "deepsafe" }
+sp-consensus-aura = { git = "https://github.com/deepsafe/polkadot-sdk", branch = "deepsafe", default-features = false }
+sp-consensus-grandpa = { git = "https://github.com/deepsafe/polkadot-sdk", branch = "deepsafe", default-features = false }
+sp-core = { git = "https://github.com/deepsafe/polkadot-sdk", branch = "deepsafe", default-features = false }
+sp-core-hashing = { git = "https://github.com/deepsafe/polkadot-sdk", branch = "deepsafe", default-features = false }
+sp-core-hashing-proc-macro = { git = "https://github.com/deepsafe/polkadot-sdk", branch = "deepsafe", default-features = false }
+sp-database = { git = "https://github.com/deepsafe/polkadot-sdk", branch = "deepsafe" }
+sp-externalities = { git = "https://github.com/deepsafe/polkadot-sdk", branch = "deepsafe", default-features = false }
+sp-genesis-builder = { git = "https://github.com/deepsafe/polkadot-sdk", branch = "deepsafe", default-features = false }
+sp-inherents = { git = "https://github.com/deepsafe/polkadot-sdk", branch = "deepsafe", default-features = false }
+sp-io = { git = "https://github.com/deepsafe/polkadot-sdk", branch = "deepsafe", default-features = false }
+sp-keyring = { git = "https://github.com/deepsafe/polkadot-sdk", branch = "deepsafe" }
+sp-offchain = { git = "https://github.com/deepsafe/polkadot-sdk", branch = "deepsafe", default-features = false }
+sp-runtime = { git = "https://github.com/deepsafe/polkadot-sdk", branch = "deepsafe", default-features = false }
+sp-runtime-interface = { git = "https://github.com/deepsafe/polkadot-sdk", branch = "deepsafe", default-features = false }
+sp-session = { git = "https://github.com/deepsafe/polkadot-sdk", branch = "deepsafe", default-features = false }
+sp-state-machine = { git = "https://github.com/deepsafe/polkadot-sdk", branch = "deepsafe", default-features = false }
+sp-std = { git = "https://github.com/deepsafe/polkadot-sdk", branch = "deepsafe", default-features = false }
+sp-storage = { git = "https://github.com/deepsafe/polkadot-sdk", branch = "deepsafe", default-features = false }
+sp-timestamp = { git = "https://github.com/deepsafe/polkadot-sdk", branch = "deepsafe", default-features = false }
+sp-transaction-pool = { git = "https://github.com/deepsafe/polkadot-sdk", branch = "deepsafe", default-features = false }
+sp-version = { git = "https://github.com/deepsafe/polkadot-sdk", branch = "deepsafe", default-features = false }
+sp-weights = { git = "https://github.com/deepsafe/polkadot-sdk", branch = "deepsafe", default-features = false }
 # Substrate FRAME
-frame-benchmarking = { git = "https://github.com/paritytech/polkadot-sdk", branch = "release-polkadot-v1.6.0", default-features = false }
-frame-executive = { git = "https://github.com/paritytech/polkadot-sdk", branch = "release-polkadot-v1.6.0", default-features = false }
-frame-support = { git = "https://github.com/paritytech/polkadot-sdk", branch = "release-polkadot-v1.6.0", default-features = false }
-frame-system = { git = "https://github.com/paritytech/polkadot-sdk", branch = "release-polkadot-v1.6.0", default-features = false }
-frame-system-benchmarking = { git = "https://github.com/paritytech/polkadot-sdk", branch = "release-polkadot-v1.6.0", default-features = false }
-frame-system-rpc-runtime-api = { git = "https://github.com/paritytech/polkadot-sdk", branch = "release-polkadot-v1.6.0", default-features = false }
-pallet-aura = { git = "https://github.com/paritytech/polkadot-sdk", branch = "release-polkadot-v1.6.0", default-features = false }
-pallet-balances = { git = "https://github.com/paritytech/polkadot-sdk", branch = "release-polkadot-v1.6.0", default-features = false }
-pallet-grandpa = { git = "https://github.com/paritytech/polkadot-sdk", branch = "release-polkadot-v1.6.0", default-features = false }
-pallet-sudo = { git = "https://github.com/paritytech/polkadot-sdk", branch = "release-polkadot-v1.6.0", default-features = false }
-pallet-timestamp = { git = "https://github.com/paritytech/polkadot-sdk", branch = "release-polkadot-v1.6.0", default-features = false }
-pallet-transaction-payment = { git = "https://github.com/paritytech/polkadot-sdk", branch = "release-polkadot-v1.6.0", default-features = false }
-pallet-transaction-payment-rpc = { git = "https://github.com/paritytech/polkadot-sdk", branch = "release-polkadot-v1.6.0" }
-pallet-transaction-payment-rpc-runtime-api = { git = "https://github.com/paritytech/polkadot-sdk", branch = "release-polkadot-v1.6.0", default-features = false }
-pallet-utility = { git = "https://github.com/paritytech/polkadot-sdk", branch = "release-polkadot-v1.6.0", default-features = false }
+frame-benchmarking = { git = "https://github.com/deepsafe/polkadot-sdk", branch = "deepsafe", default-features = false }
+frame-executive = { git = "https://github.com/deepsafe/polkadot-sdk", branch = "deepsafe", default-features = false }
+frame-support = { git = "https://github.com/deepsafe/polkadot-sdk", branch = "deepsafe", default-features = false }
+frame-system = { git = "https://github.com/deepsafe/polkadot-sdk", branch = "deepsafe", default-features = false }
+frame-system-benchmarking = { git = "https://github.com/deepsafe/polkadot-sdk", branch = "deepsafe", default-features = false }
+frame-system-rpc-runtime-api = { git = "https://github.com/deepsafe/polkadot-sdk", branch = "deepsafe", default-features = false }
+pallet-aura = { git = "https://github.com/deepsafe/polkadot-sdk", branch = "deepsafe", default-features = false }
+pallet-balances = { git = "https://github.com/deepsafe/polkadot-sdk", branch = "deepsafe", default-features = false }
+pallet-grandpa = { git = "https://github.com/deepsafe/polkadot-sdk", branch = "deepsafe", default-features = false }
+pallet-sudo = { git = "https://github.com/deepsafe/polkadot-sdk", branch = "deepsafe", default-features = false }
+pallet-timestamp = { git = "https://github.com/deepsafe/polkadot-sdk", branch = "deepsafe", default-features = false }
+pallet-transaction-payment = { git = "https://github.com/deepsafe/polkadot-sdk", branch = "deepsafe", default-features = false }
+pallet-transaction-payment-rpc = { git = "https://github.com/deepsafe/polkadot-sdk", branch = "deepsafe" }
+pallet-transaction-payment-rpc-runtime-api = { git = "https://github.com/deepsafe/polkadot-sdk", branch = "deepsafe", default-features = false }
+pallet-utility = { git = "https://github.com/deepsafe/polkadot-sdk", branch = "deepsafe", default-features = false }
 # Substrate Utility
-frame-benchmarking-cli = { git = "https://github.com/paritytech/polkadot-sdk", branch = "release-polkadot-v1.6.0" }
-prometheus-endpoint = { package = "substrate-prometheus-endpoint", git = "https://github.com/paritytech/polkadot-sdk", branch = "release-polkadot-v1.6.0" }
-substrate-build-script-utils = { git = "https://github.com/paritytech/polkadot-sdk", branch = "release-polkadot-v1.6.0" }
-substrate-frame-rpc-system = { git = "https://github.com/paritytech/polkadot-sdk", branch = "release-polkadot-v1.6.0" }
-substrate-test-runtime-client = { git = "https://github.com/paritytech/polkadot-sdk", branch = "release-polkadot-v1.6.0" }
-substrate-wasm-builder = { git = "https://github.com/paritytech/polkadot-sdk", branch = "release-polkadot-v1.6.0" }
+frame-benchmarking-cli = { git = "https://github.com/deepsafe/polkadot-sdk", branch = "deepsafe" }
+prometheus-endpoint = { package = "substrate-prometheus-endpoint", git = "https://github.com/deepsafe/polkadot-sdk", branch = "deepsafe" }
+substrate-build-script-utils = { git = "https://github.com/deepsafe/polkadot-sdk", branch = "deepsafe" }
+substrate-frame-rpc-system = { git = "https://github.com/deepsafe/polkadot-sdk", branch = "deepsafe" }
+substrate-test-runtime-client = { git = "https://github.com/deepsafe/polkadot-sdk", branch = "deepsafe" }
+substrate-wasm-builder = { git = "https://github.com/deepsafe/polkadot-sdk", branch = "deepsafe" }
+substrate-prometheus-endpoint = { git = "https://github.com/deepsafe/substrate", branch = "deepsafe" }
 
 # XCM
-xcm = { package = "staging-xcm", git = "https://github.com/paritytech/polkadot-sdk", branch = "release-polkadot-v1.6.0", default-features = false }
+xcm = { package = "staging-xcm", git = "https://github.com/deepsafe/polkadot-sdk", branch = "deepsafe", default-features = false }
 
 # Arkworks
 ark-bls12-377 = { version = "0.4.0", default-features = false, features = ["curve"] }
@@ -170,6 +191,14 @@ fc-mapping-sync = { version = "2.0.0-dev", path = "client/mapping-sync", default
 fc-rpc = { version = "2.0.0-dev", path = "client/rpc", default-features = false }
 fc-rpc-core = { version = "1.1.0-dev", path = "client/rpc-core" }
 fc-storage = { version = "1.0.0-dev", path = "client/storage" }
+fc-evm-tracing = { version = "0.1.0", path = "client/deepsafe/evm-tracing" }
+fc-rpc-core-debug = { version = "0.1.0", path = "client/deepsafe/rpc-core/debug" }
+fc-rpc-core-trace = { version = "0.6.0", path = "client/deepsafe/rpc-core/trace" }
+fc-rpc-core-txpool = { version = "0.6.0", path = "client/deepsafe/rpc-core/txpool" }
+fc-rpc-core-types = { version = "0.1.0", path = "client/deepsafe/rpc-core/types" }
+fc-rpc-debug = { version = "0.1.0", path = "client/deepsafe/rpc/debug" }
+fc-rpc-trace = { version = "0.1.0", path = "client/deepsafe/rpc/trace" }
+fc-rpc-txpool = { version = "0.1.0", path = "client/deepsafe/rpc/txpool" }
 # Frontier Primitive
 fp-account = { version = "1.0.0-dev", path = "primitives/account", default-features = false }
 fp-consensus = { version = "2.0.0-dev", path = "primitives/consensus", default-features = false }
@@ -179,6 +208,12 @@ fp-evm = { version = "3.0.0-dev", path = "primitives/evm", default-features = fa
 fp-rpc = { version = "3.0.0-dev", path = "primitives/rpc", default-features = false }
 fp-self-contained = { version = "1.0.0-dev", path = "primitives/self-contained", default-features = false }
 fp-storage = { version = "2.0.0", path = "primitives/storage", default-features = false }
+fp-ext = { version = "0.1.0", path = "primitives/deepsafe/ext", default-features = false }
+fp-rpc-debug = { version = "0.1.0", path = "primitives/deepsafe/rpc/debug", default-features = false }
+fp-rpc-evm-tracing-events = { version = "0.1.0", path = "primitives/deepsafe/rpc/evm-tracing-events", default-features = false }
+fp-rpc-txpool = { version = "0.6.0", path = "primitives/deepsafe/rpc/txpool", default-features = false }
+# Frontier Runtime
+evm-tracer = { version = "0.1.0", path = "runtime/evm-tracer", default-features = false }
 # Frontier FRAME
 pallet-base-fee = { version = "1.0.0", path = "frame/base-fee", default-features = false }
 pallet-dynamic-fee = { version = "4.0.0-dev", path = "frame/dynamic-fee", default-features = false }

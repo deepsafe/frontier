@@ -30,6 +30,7 @@ use sp_core::hashing::keccak_256;
 use sp_runtime::traits::Block as BlockT;
 // Frontier
 use fc_rpc_core::types::*;
+use fp_ethereum::Header1559;
 use fp_rpc::EthereumRuntimeRPCApi;
 
 use crate::{
@@ -43,7 +44,7 @@ where
 	C: ProvideRuntimeApi<B>,
 	C::Api: EthereumRuntimeRPCApi<B>,
 	C: HeaderBackend<B> + StorageProvider<B, BE> + 'static,
-	BE: Backend<B> + 'static,
+	BE: Backend<B> + Send + Sync + 'static,
 	A: ChainApi<Block = B>,
 {
 	pub async fn block_by_hash(&self, hash: H256, full: bool) -> RpcResult<Option<RichBlock>> {
@@ -114,7 +115,10 @@ where
 
 				match (block, statuses) {
 					(Some(block), Some(statuses)) => {
-						let hash = H256::from(keccak_256(&rlp::encode(&block.header)));
+						let hash = match base_fee {
+							Some(base_fee) => H256::from(Header1559::new_from_header(block.header.clone(), base_fee).hash().0),
+							None => H256::from(keccak_256(&rlp::encode(&block.header))),
+						};
 						let mut rich_block = rich_block_build(
 							block,
 							statuses.into_iter().map(Option::Some).collect(),
@@ -234,19 +238,19 @@ where
 		Ok(Some(receipts))
 	}
 
-	pub fn block_uncles_count_by_hash(&self, _: H256) -> RpcResult<U256> {
+	pub fn block_uncles_count_by_hash_inner(&self, _: H256) -> RpcResult<U256> {
 		Ok(U256::zero())
 	}
 
-	pub fn block_uncles_count_by_number(&self, _: BlockNumberOrHash) -> RpcResult<U256> {
+	pub fn block_uncles_count_by_number_inner(&self, _: BlockNumberOrHash) -> RpcResult<U256> {
 		Ok(U256::zero())
 	}
 
-	pub fn uncle_by_block_hash_and_index(&self, _: H256, _: Index) -> RpcResult<Option<RichBlock>> {
+	pub fn uncle_by_block_hash_and_index_inner(&self, _: H256, _: Index) -> RpcResult<Option<RichBlock>> {
 		Ok(None)
 	}
 
-	pub fn uncle_by_block_number_and_index(
+	pub fn uncle_by_block_number_and_index_inner(
 		&self,
 		_: BlockNumberOrHash,
 		_: Index,

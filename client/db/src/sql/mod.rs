@@ -37,11 +37,13 @@ use sp_runtime::{
 	traits::{BlakeTwo256, Block as BlockT, Header as HeaderT, UniqueSaturatedInto, Zero},
 };
 // Frontier
-use fc_api::{FilteredLog, TransactionMetadata};
 use fc_storage::OverrideHandle;
 use fp_consensus::{FindLogError, Hashes, Log as ConsensusLog, PostLog, PreLog};
 use fp_rpc::EthereumRuntimeRPCApi;
 use fp_storage::{EthereumStorageSchema, PALLET_ETHEREUM_SCHEMA};
+use fp_ethereum::Header1559;
+
+use crate::{BackendReader, FilteredLog};
 
 /// Maximum number to topics allowed to be filtered upon
 const MAX_TOPIC_COUNT: u16 = 4;
@@ -107,7 +109,7 @@ pub struct Backend<Block: BlockT> {
 
 impl<Block: BlockT> Backend<Block>
 where
-	Block: BlockT<Hash = H256>,
+	Block: BlockT<Hash = H256> + Send + Sync,
 {
 	/// Creates a new instance of the SQL backend.
 	pub async fn new(
@@ -200,7 +202,7 @@ where
 		client: Arc<Client>,
 	) -> Result<Option<H256>, Error>
 	where
-		Client: StorageProvider<Block, BE> + HeaderBackend<Block> + 'static,
+		Client: StorageProvider<Block, BE> + HeaderBackend<Block> + ProvideRuntimeApi<Block> + Send + Sync + 'static,
 		Client: ProvideRuntimeApi<Block>,
 		Client::Api: EthereumRuntimeRPCApi<Block>,
 		BE: BackendT<Block> + 'static,
@@ -234,7 +236,13 @@ where
 
 				let schema =
 					Self::onchain_storage_schema(client.as_ref(), substrate_genesis_hash).encode();
-				let ethereum_block_hash = ethereum_block.header.hash().as_bytes().to_owned();
+				let base_fee = client
+					.runtime_api()
+					.gas_price(client.info().best_hash).ok();
+				let eth_block_hash = match base_fee {
+					Some(base_fee) => Header1559::new_from_header(ethereum_block.header.clone(), base_fee).hash(),
+					None => ethereum_block.header.hash(),
+				};
 				let substrate_block_hash = substrate_genesis_hash.as_bytes();
 				let block_number = 0i32;
 				let is_canon = 1i32;
@@ -248,7 +256,7 @@ where
 						is_canon)
 					VALUES (?, ?, ?, ?, ?)",
 				)
-				.bind(ethereum_block_hash)
+				.bind(eth_block_hash.as_bytes().to_owned())
 				.bind(substrate_block_hash)
 				.bind(block_number)
 				.bind(schema)
@@ -269,7 +277,8 @@ where
 		overrides: Arc<OverrideHandle<Block>>,
 	) -> Result<BlockMetadata, Error>
 	where
-		Client: StorageProvider<Block, BE> + HeaderBackend<Block> + 'static,
+		Client: StorageProvider<Block, BE> + HeaderBackend<Block> + ProvideRuntimeApi<Block> + Send + Sync + 'static,
+		Client::Api: EthereumRuntimeRPCApi<Block>,
 		BE: BackendT<Block> + 'static,
 		BE::State: StateBackend<BlakeTwo256>,
 	{
@@ -280,7 +289,10 @@ where
 					let schema = Self::onchain_storage_schema(client.as_ref(), hash);
 					let log_hashes = match log {
 						ConsensusLog::Post(PostLog::Hashes(post_hashes)) => post_hashes,
-						ConsensusLog::Post(PostLog::Block(block)) => Hashes::from_block(block),
+						ConsensusLog::Post(PostLog::Block(block)) => {
+							let base_fee = client.runtime_api().gas_price(client.info().best_hash).ok();
+							Hashes::from_block(block, base_fee)
+						},
 						ConsensusLog::Post(PostLog::BlockHash(expect_eth_block_hash)) => {
 							let ethereum_block = overrides
 								.schemas
@@ -289,7 +301,13 @@ where
 								.current_block(hash);
 							match ethereum_block {
 								Some(block) => {
-									let got_eth_block_hash = block.header.hash();
+									let base_fee = client
+										.runtime_api()
+										.gas_price(client.info().best_hash).ok();
+									let got_eth_block_hash = match base_fee {
+										Some(base_fee) => Header1559::new_from_header(block.header.clone(), base_fee).hash(),
+										None => block.header.hash(),
+									};
 									if got_eth_block_hash != expect_eth_block_hash {
 										return Err(Error::Protocol(format!(
 											"Ethereum block hash mismatch: \
@@ -297,7 +315,7 @@ where
 											db state ({got_eth_block_hash:?})"
 										)));
 									} else {
-										Hashes::from_block(block)
+										Hashes::from_block(block, base_fee)
 									}
 								}
 								None => {
@@ -307,7 +325,10 @@ where
 								}
 							}
 						}
-						ConsensusLog::Pre(PreLog::Block(block)) => Hashes::from_block(block),
+						ConsensusLog::Pre(PreLog::Block(block)) => {
+							let base_fee = client.runtime_api().gas_price(client.info().best_hash).ok();
+							Hashes::from_block(block, base_fee)
+						},
 					};
 
 					let header_number = *header.number();
@@ -361,7 +382,8 @@ where
 		hash: H256,
 	) -> Result<(), Error>
 	where
-		Client: StorageProvider<Block, BE> + HeaderBackend<Block> + 'static,
+		Client: StorageProvider<Block, BE> + HeaderBackend<Block> + ProvideRuntimeApi<Block> + Send + Sync + 'static,
+		Client::Api: EthereumRuntimeRPCApi<Block>,
 		BE: BackendT<Block> + 'static,
 		BE::State: StateBackend<BlakeTwo256>,
 	{
@@ -437,7 +459,7 @@ where
 	/// Index the logs for the newly indexed blocks upto a `max_pending_blocks` value.
 	pub async fn index_block_logs<Client, BE>(&self, client: Arc<Client>, block_hash: Block::Hash)
 	where
-		Client: StorageProvider<Block, BE> + HeaderBackend<Block> + 'static,
+		Client: StorageProvider<Block, BE> + HeaderBackend<Block> + ProvideRuntimeApi<Block> + Send + Sync + 'static,
 		BE: BackendT<Block> + 'static,
 		BE::State: StateBackend<BlakeTwo256>,
 	{
@@ -518,7 +540,7 @@ where
 		substrate_block_hash: H256,
 	) -> Vec<Log>
 	where
-		Client: StorageProvider<Block, BE> + HeaderBackend<Block> + 'static,
+		Client: StorageProvider<Block, BE> + HeaderBackend<Block> + Send + Sync + 'static,
 		BE: BackendT<Block> + 'static,
 		BE::State: StateBackend<BlakeTwo256>,
 	{
@@ -567,7 +589,7 @@ where
 
 	fn onchain_storage_schema<Client, BE>(client: &Client, at: Block::Hash) -> EthereumStorageSchema
 	where
-		Client: StorageProvider<Block, BE> + HeaderBackend<Block> + 'static,
+		Client: StorageProvider<Block, BE> + HeaderBackend<Block> + Send + Sync + 'static,
 		BE: BackendT<Block> + 'static,
 		BE::State: StateBackend<BlakeTwo256>,
 	{
@@ -797,7 +819,7 @@ where
 }
 
 #[async_trait::async_trait]
-impl<Block: BlockT<Hash = H256>> fc_api::Backend<Block> for Backend<Block> {
+impl<Block: BlockT<Hash = H256>> BackendReader<Block> for Backend<Block> {
 	async fn block_hash(
 		&self,
 		ethereum_block_hash: &H256,
@@ -822,7 +844,7 @@ impl<Block: BlockT<Hash = H256>> fc_api::Backend<Block> for Backend<Block> {
 	async fn transaction_metadata(
 		&self,
 		ethereum_transaction_hash: &H256,
-	) -> Result<Vec<TransactionMetadata<Block>>, String> {
+	) -> Result<Vec<crate::TransactionMetadata<Block>>, String> {
 		let ethereum_transaction_hash = ethereum_transaction_hash.as_bytes();
 		let out = sqlx::query(
 			"SELECT
@@ -840,8 +862,8 @@ impl<Block: BlockT<Hash = H256>> fc_api::Backend<Block> for Backend<Block> {
 			let ethereum_block_hash =
 				H256::from_slice(&row.try_get::<Vec<u8>, _>(1).unwrap_or_default()[..]);
 			let ethereum_transaction_index = row.try_get::<i32, _>(2).unwrap_or_default() as u32;
-			TransactionMetadata {
-				substrate_block_hash,
+			crate::TransactionMetadata {
+				block_hash: substrate_block_hash,
 				ethereum_block_hash,
 				ethereum_index: ethereum_transaction_index,
 			}
@@ -851,16 +873,6 @@ impl<Block: BlockT<Hash = H256>> fc_api::Backend<Block> for Backend<Block> {
 		Ok(out)
 	}
 
-	fn log_indexer(&self) -> &dyn fc_api::LogIndexerBackend<Block> {
-		self
-	}
-}
-
-#[async_trait::async_trait]
-impl<Block: BlockT<Hash = H256>> fc_api::LogIndexerBackend<Block> for Backend<Block> {
-	fn is_indexed(&self) -> bool {
-		true
-	}
 
 	async fn filter_logs(
 		&self,
@@ -868,7 +880,7 @@ impl<Block: BlockT<Hash = H256>> fc_api::LogIndexerBackend<Block> for Backend<Bl
 		to_block: u64,
 		addresses: Vec<H160>,
 		topics: Vec<Vec<Option<H256>>>,
-	) -> Result<Vec<FilteredLog<Block>>, String> {
+	) -> Result<Vec<crate::FilteredLog<Block>>, String> {
 		let mut unique_topics: [HashSet<H256>; 4] = [
 			HashSet::new(),
 			HashSet::new(),
@@ -887,7 +899,10 @@ impl<Block: BlockT<Hash = H256>> fc_api::LogIndexerBackend<Block> for Backend<Bl
 			}
 		}
 
-		let log_key = format!("{from_block}-{to_block}-{addresses:?}-{unique_topics:?}");
+		let log_key = format!(
+			"{}-{}-{:?}-{:?}",
+			from_block, to_block, addresses, unique_topics
+		);
 		let mut qb = QueryBuilder::new("");
 		let query = build_query(&mut qb, from_block, to_block, addresses, unique_topics);
 		let sql = query.sql();
@@ -931,6 +946,113 @@ impl<Block: BlockT<Hash = H256>> fc_api::LogIndexerBackend<Block> for Backend<Bl
 					// Log index
 					let log_index = row.try_get::<i32, _>(5).unwrap_or_default() as u32;
 					out.push(FilteredLog {
+						substrate_block_hash,
+						ethereum_block_hash,
+						block_number,
+						ethereum_storage_schema,
+						transaction_index,
+						log_index,
+					});
+				}
+				Ok(None) => break None, // no more rows
+				Err(err) => break Some(err),
+			};
+		};
+		drop(rows);
+		conn.lock_handle()
+			.await
+			.map_err(|err| format!("{:?}", err))?
+			.remove_progress_handler();
+
+		if let Some(err) = maybe_err {
+			log::error!(target: "frontier-sql", "Failed to query sql db: {err:?} - {log_key}");
+			return Err("Failed to query sql db with statement".to_string());
+		}
+
+		log::info!(target: "frontier-sql", "FILTER remove handler - {log_key}");
+		Ok(out)
+	}
+
+	fn is_indexed(&self) -> bool {
+		true
+	}
+}
+
+#[async_trait::async_trait]
+impl<Block: BlockT<Hash = H256>> fc_api::LogIndexerBackend<Block> for Backend<Block> {
+	fn is_indexed(&self) -> bool {
+		true
+	}
+
+	async fn filter_logs(
+		&self,
+		from_block: u64,
+		to_block: u64,
+		addresses: Vec<H160>,
+		topics: Vec<Vec<Option<H256>>>,
+	) -> Result<Vec<fc_api::FilteredLog<Block>>, String> {
+		let mut unique_topics: [HashSet<H256>; 4] = [
+			HashSet::new(),
+			HashSet::new(),
+			HashSet::new(),
+			HashSet::new(),
+		];
+		for topic_combination in topics.into_iter() {
+			for (topic_index, topic) in topic_combination.into_iter().enumerate() {
+				if topic_index == MAX_TOPIC_COUNT as usize {
+					return Err("Invalid topic input. Maximum length is 4.".to_string());
+				}
+
+				if let Some(topic) = topic {
+					unique_topics[topic_index].insert(topic);
+				}
+			}
+		}
+
+		let log_key = format!("{from_block}-{to_block}-{addresses:?}-{unique_topics:?}");
+		let mut qb = QueryBuilder::new("");
+		let query = build_query(&mut qb, from_block, to_block, addresses, unique_topics);
+		let sql = query.sql();
+
+		let mut conn = self
+			.pool()
+			.acquire()
+			.await
+			.map_err(|err| format!("failed acquiring sqlite connection: {}", err))?;
+		let log_key2 = log_key.clone();
+		conn.lock_handle()
+			.await
+			.map_err(|err| format!("{:?}", err))?
+			.set_progress_handler(self.num_ops_timeout, move || {
+				log::debug!(target: "frontier-sql", "Sqlite progress_handler triggered for {log_key2}");
+				false
+			});
+		log::debug!(target: "frontier-sql", "Query: {sql:?} - {log_key}");
+
+		let mut out: Vec<fc_api::FilteredLog<Block>> = vec![];
+		let mut rows = query.fetch(&mut *conn);
+		let maybe_err = loop {
+			match rows.try_next().await {
+				Ok(Some(row)) => {
+					// Substrate block hash
+					let substrate_block_hash =
+						H256::from_slice(&row.try_get::<Vec<u8>, _>(0).unwrap_or_default()[..]);
+					// Ethereum block hash
+					let ethereum_block_hash =
+						H256::from_slice(&row.try_get::<Vec<u8>, _>(1).unwrap_or_default()[..]);
+					// Block number
+					let block_number = row.try_get::<i32, _>(2).unwrap_or_default() as u32;
+					// Ethereum storage schema
+					let ethereum_storage_schema: EthereumStorageSchema =
+						Decode::decode(&mut &row.try_get::<Vec<u8>, _>(3).unwrap_or_default()[..])
+							.map_err(|_| {
+								"Cannot decode EthereumStorageSchema for block".to_string()
+							})?;
+					// Transaction index
+					let transaction_index = row.try_get::<i32, _>(4).unwrap_or_default() as u32;
+					// Log index
+					let log_index = row.try_get::<i32, _>(5).unwrap_or_default() as u32;
+					out.push(fc_api::FilteredLog {
 						substrate_block_hash,
 						ethereum_block_hash,
 						block_number,

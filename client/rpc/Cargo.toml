@@ -54,11 +54,12 @@ sp-state-machine = { workspace = true, features = ["default"] }
 sp-storage = { workspace = true, features = ["default"] }
 sp-timestamp = { workspace = true, features = ["default"] }
 # Frontier
-fc-api = { workspace = true }
+fc-db = { workspace = true }
 fc-mapping-sync = { workspace = true }
 fc-rpc-core = { workspace = true }
 fc-storage = { workspace = true }
 fp-evm = { workspace = true, features = ["default"] }
+fp-ethereum = { workspace = true, features = ["default"] }
 fp-rpc = { workspace = true, features = ["default"] }
 fp-storage = { workspace = true, features = ["default"] }
 pallet-evm = { workspace = true, features = ["default"] }
@@ -70,8 +71,6 @@ sc-block-builder = { workspace = true }
 sc-client-db = { workspace = true, features = ["rocksdb"] }
 sp-consensus = { workspace = true }
 substrate-test-runtime-client = { workspace = true }
-# Frontier
-fc-db = { workspace = true }
 
 [features]
 default = ["rocksdb"]

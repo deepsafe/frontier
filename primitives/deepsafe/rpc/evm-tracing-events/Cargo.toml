@@ -1,0 +1,33 @@
+[package]
+name = "fp-rpc-evm-tracing-events"
+edition = "2021"
+license = "Apache-2.0"
+version = "0.1.0"
+
+[dependencies]
+environmental = { workspace = true }
+
+# Substrate
+parity-scale-codec = { workspace = true }
+sp-runtime-interface = { workspace = true }
+
+# Ethereum
+ethereum = { workspace = true, features = ["with-codec"] }
+ethereum-types = { workspace = true }
+evm = { workspace = true, features = ["with-codec"] }
+evm-gasometer = { workspace = true }
+evm-runtime = { workspace = true }
+
+[features]
+default = ["std"]
+std = [
+	"parity-scale-codec/std",
+	"environmental/std",
+	"ethereum-types/std",
+	"ethereum/std",
+	"evm-gasometer/std",
+	"evm-runtime/std",
+	"evm/std",
+	"sp-runtime-interface/std",
+]
+evm-tracing = ["evm-gasometer/tracing", "evm-runtime/tracing", "evm/tracing"]

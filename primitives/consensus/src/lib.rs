@@ -20,12 +20,13 @@
 #![warn(unused_crate_dependencies)]
 
 use scale_codec::{Decode, Encode};
-use sp_core::H256;
+use sp_core::{H256, U256};
 use sp_runtime::{
 	generic::{Digest, OpaqueDigestItemId},
 	ConsensusEngineId,
 };
 use sp_std::vec::Vec;
+use fp_ethereum::Header1559;
 
 pub const FRONTIER_ENGINE_ID: ConsensusEngineId = [b'f', b'r', b'o', b'n'];
 
@@ -63,9 +64,13 @@ pub struct Hashes {
 }
 
 impl Hashes {
-	pub fn from_block(block: ethereum::BlockV2) -> Self {
+	pub fn from_block(block: ethereum::BlockV2, base_fee: Option<U256>) -> Self {
+		let block_hash = match base_fee {
+			Some(base_fee) => Header1559::new_from_header(block.header.clone(), base_fee).hash(),
+			None => block.header.hash(),
+		};
 		Hashes {
-			block_hash: block.header.hash(),
+			block_hash,
 			transaction_hashes: block
 				.transactions
 				.into_iter()

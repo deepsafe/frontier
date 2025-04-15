@@ -27,7 +27,6 @@
 #![warn(unused_crate_dependencies)]
 
 mod cache;
-mod debug;
 mod eth;
 mod eth_pubsub;
 mod net;
@@ -40,7 +39,6 @@ mod web3;
 pub use self::txpool::TxPool;
 pub use self::{
 	cache::{EthBlockDataCacheTask, EthTask},
-	debug::Debug,
 	eth::{format, pending, EstimateGasAdapter, Eth, EthConfig, EthFilter},
 	eth_pubsub::{EthPubSub, EthereumSubIdProvider},
 	net::Net,
@@ -192,7 +190,7 @@ pub mod frontier_backend_client {
 
 	pub async fn native_block_id<B: BlockT, C>(
 		client: &C,
-		backend: &dyn fc_api::Backend<B>,
+		backend: &(dyn fc_db::BackendReader<B> + Send + Sync),
 		number: Option<BlockNumberOrHash>,
 	) -> RpcResult<Option<BlockId<B>>>
 	where
@@ -218,7 +216,7 @@ pub mod frontier_backend_client {
 
 	pub async fn load_hash<B: BlockT, C>(
 		client: &C,
-		backend: &dyn fc_api::Backend<B>,
+		backend: &(dyn fc_db::BackendReader<B> + Send + Sync),
 		hash: H256,
 	) -> RpcResult<Option<B::Hash>>
 	where
@@ -255,7 +253,7 @@ pub mod frontier_backend_client {
 
 	pub async fn load_transactions<B: BlockT, C>(
 		client: &C,
-		backend: &dyn fc_api::Backend<B>,
+		backend: &(dyn fc_db::BackendReader<B> + Send + Sync),
 		transaction_hash: H256,
 		only_canonical: bool,
 	) -> RpcResult<Option<(H256, u32)>>
@@ -270,7 +268,7 @@ pub mod frontier_backend_client {
 
 		transaction_metadata
 			.iter()
-			.find(|meta| is_canon::<B, C>(client, meta.substrate_block_hash))
+			.find(|meta| is_canon::<B, C>(client, meta.block_hash))
 			.map_or_else(
 				|| {
 					if !only_canonical && transaction_metadata.len() > 0 {

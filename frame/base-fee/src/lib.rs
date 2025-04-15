@@ -60,6 +60,7 @@ pub mod pallet {
 		pub _marker: PhantomData<T>,
 	}
 
+	#[cfg(feature = "std")]
 	impl<T: Config> GenesisConfig<T> {
 		pub fn new(base_fee_per_gas: U256, elasticity: Permill) -> Self {
 			Self {
@@ -70,6 +71,7 @@ pub mod pallet {
 		}
 	}
 
+	#[cfg(feature = "std")]
 	impl<T: Config> Default for GenesisConfig<T> {
 		fn default() -> Self {
 			Self {

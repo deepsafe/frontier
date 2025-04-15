@@ -40,12 +40,13 @@ use sp_runtime::{
 // Frontier
 use fc_rpc_core::{types::*, EthFilterApiServer};
 use fp_rpc::{EthereumRuntimeRPCApi, TransactionStatus};
+use fp_ethereum::Header1559;
 
 use crate::{cache::EthBlockDataCacheTask, frontier_backend_client, internal_err};
 
 pub struct EthFilter<B: BlockT, C, BE, A: ChainApi> {
 	client: Arc<C>,
-	backend: Arc<dyn fc_api::Backend<B>>,
+	backend: Arc<dyn fc_db::BackendReader<B> + Send + Sync>,
 	graph: Arc<Pool<A>>,
 	filter_pool: FilterPool,
 	max_stored_filters: usize,
@@ -57,7 +58,7 @@ pub struct EthFilter<B: BlockT, C, BE, A: ChainApi> {
 impl<B: BlockT, C, BE, A: ChainApi> EthFilter<B, C, BE, A> {
 	pub fn new(
 		client: Arc<C>,
-		backend: Arc<dyn fc_api::Backend<B>>,
+		backend: Arc<dyn fc_db::BackendReader<B> + Send + Sync>,
 		graph: Arc<Pool<A>>,
 		filter_pool: FilterPool,
 		max_stored_filters: usize,
@@ -330,7 +331,14 @@ where
 
 					let block = block_data_cache.current_block(schema, substrate_hash).await;
 					if let Some(block) = block {
-						ethereum_hashes.push(block.header.hash())
+						let base_fee = client
+							.runtime_api()
+							.gas_price(client.info().best_hash).ok();
+						let block_hash = match base_fee {
+							Some(base_fee) => Header1559::new_from_header(block.header.clone(), base_fee).hash(),
+							None => block.header.hash(),
+						};
+						ethereum_hashes.push(block_hash)
 					}
 				}
 				Ok(FilterChanges::Hashes(ethereum_hashes))
@@ -345,7 +353,7 @@ where
 				if backend.is_indexed() {
 					let _ = filter_range_logs_indexed(
 						client.as_ref(),
-						backend.log_indexer(),
+						backend.as_ref(),
 						&block_data_cache,
 						&mut ret,
 						max_past_logs,
@@ -424,7 +432,7 @@ where
 		if backend.is_indexed() {
 			let _ = filter_range_logs_indexed(
 				client.as_ref(),
-				backend.log_indexer(),
+				backend.as_ref(),
 				&block_data_cache,
 				&mut ret,
 				max_past_logs,
@@ -489,8 +497,9 @@ where
 			let statuses = block_data_cache
 				.current_transaction_statuses(schema, substrate_hash)
 				.await;
+			let base_fee = client.runtime_api().gas_price(substrate_hash).ok();
 			if let (Some(block), Some(statuses)) = (block, statuses) {
-				filter_block_logs(&mut ret, &filter, block, statuses);
+				filter_block_logs(&mut ret, &filter, block, statuses, base_fee);
 			}
 		} else {
 			let best_number = client.info().best_number;
@@ -513,7 +522,7 @@ where
 			if backend.is_indexed() {
 				let _ = filter_range_logs_indexed(
 					client.as_ref(),
-					backend.log_indexer(),
+					backend.as_ref(),
 					&block_data_cache,
 					&mut ret,
 					max_past_logs,
@@ -541,7 +550,7 @@ where
 
 async fn filter_range_logs_indexed<B, C, BE>(
 	_client: &C,
-	backend: &dyn fc_api::LogIndexerBackend<B>,
+	backend: &(dyn fc_db::BackendReader<B> + Send + Sync),
 	block_data_cache: &EthBlockDataCacheTask<B>,
 	ret: &mut Vec<Log>,
 	max_past_logs: u32,
@@ -732,8 +741,9 @@ where
 				let statuses = block_data_cache
 					.current_transaction_statuses(schema, substrate_hash)
 					.await;
+				let base_fee = client.runtime_api().gas_price(substrate_hash).ok();
 				if let Some(statuses) = statuses {
-					filter_block_logs(ret, filter, block, statuses);
+					filter_block_logs(ret, filter, block, statuses, base_fee);
 				}
 			}
 		}
@@ -764,10 +774,14 @@ fn filter_block_logs<'a>(
 	filter: &'a Filter,
 	block: EthereumBlock,
 	transaction_statuses: Vec<TransactionStatus>,
+	base_fee: Option<U256>,
 ) -> &'a Vec<Log> {
 	let params = FilteredParams::new(Some(filter.clone()));
 	let mut block_log_index: u32 = 0;
-	let block_hash = H256::from(keccak_256(&rlp::encode(&block.header)));
+	let block_hash = match base_fee {
+		Some(base_fee) => H256::from(Header1559::new_from_header(block.header.clone(), base_fee).hash().0),
+		None => H256::from(keccak_256(&rlp::encode(&block.header))),
+	};
 	for status in transaction_statuses.iter() {
 		let mut transaction_log_index: u32 = 0;
 		let transaction_hash = status.transaction_hash;

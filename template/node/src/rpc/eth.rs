@@ -44,7 +44,7 @@ pub struct EthDeps<B: BlockT, C, P, A: ChainApi, CT, CIDP> {
 	/// Chain syncing service
 	pub sync: Arc<SyncingService<B>>,
 	/// Frontier Backend.
-	pub frontier_backend: Arc<dyn fc_api::Backend<B>>,
+	pub frontier_backend: Arc<dyn fc_db::BackendReader<B> + Send + Sync>,
 	/// Ethereum data access overrides.
 	pub overrides: Arc<OverrideHandle<B>>,
 	/// Cache for Ethereum block data.
@@ -92,9 +92,10 @@ where
 	CT: ConvertTransaction<<B as BlockT>::Extrinsic> + Send + Sync + 'static,
 	CIDP: CreateInherentDataProviders<B, ()> + Send + 'static,
 	EC: EthConfig<B, C>,
+	BE: Backend<B>,
 {
 	use fc_rpc::{
-		pending::AuraConsensusDataProvider, Debug, DebugApiServer, Eth, EthApiServer, EthDevSigner,
+		pending::AuraConsensusDataProvider, Eth, EthApiServer, EthDevSigner,
 		EthFilter, EthFilterApiServer, EthPubSub, EthPubSubApiServer, EthSigner, Net, NetApiServer,
 		Web3, Web3ApiServer,
 	};
@@ -188,16 +189,6 @@ where
 	)?;
 
 	io.merge(Web3::new(client.clone()).into_rpc())?;
-
-	io.merge(
-		Debug::new(
-			client.clone(),
-			frontier_backend,
-			overrides,
-			block_data_cache,
-		)
-		.into_rpc(),
-	)?;
 
 	#[cfg(feature = "txpool")]
 	io.merge(TxPool::new(client, graph).into_rpc())?;

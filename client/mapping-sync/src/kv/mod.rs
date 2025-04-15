@@ -34,6 +34,7 @@ use sp_runtime::traits::{Block as BlockT, Header as HeaderT, Zero};
 use fc_storage::OverrideHandle;
 use fp_consensus::{FindLogError, Hashes, Log, PostLog, PreLog};
 use fp_rpc::EthereumRuntimeRPCApi;
+use fp_ethereum::Header1559;
 
 use crate::{EthereumBlockNotification, EthereumBlockNotificationSinks, SyncStrategy};
 
@@ -44,7 +45,8 @@ pub fn sync_block<Block: BlockT, C, BE>(
 	header: &Block::Header,
 ) -> Result<(), String>
 where
-	C: HeaderBackend<Block> + StorageProvider<Block, BE>,
+	C: HeaderBackend<Block> + StorageProvider<Block, BE> + ProvideRuntimeApi<Block>,
+	C::Api: EthereumRuntimeRPCApi<Block>,
 	BE: Backend<Block>,
 {
 	let substrate_block_hash = header.hash();
@@ -58,7 +60,10 @@ where
 				}
 			};
 			let gen_from_block = |block| -> fc_db::kv::MappingCommitment<Block> {
-				let hashes = Hashes::from_block(block);
+				let hashes = {
+					let base_fee = client.runtime_api().gas_price(client.info().best_hash).ok();
+					Hashes::from_block(block, base_fee)
+				};
 				gen_from_hashes(hashes)
 			};
 
@@ -86,7 +91,13 @@ where
 							.current_block(substrate_block_hash);
 						match ethereum_block {
 							Some(block) => {
-								let got_eth_block_hash = block.header.hash();
+								let base_fee = client
+									.runtime_api()
+									.gas_price(client.info().best_hash).ok();
+								let got_eth_block_hash = match base_fee {
+									Some(base_fee) => Header1559::new_from_header(block.header.clone(), base_fee).hash(),
+									None => block.header.hash(),
+								};
 								if got_eth_block_hash != expect_eth_block_hash {
 									Err(format!(
 										"Ethereum block hash mismatch: \
@@ -115,7 +126,7 @@ pub fn sync_genesis_block<Block: BlockT, C>(
 	header: &Block::Header,
 ) -> Result<(), String>
 where
-	C: ProvideRuntimeApi<Block>,
+	C: ProvideRuntimeApi<Block> + HeaderBackend<Block>,
 	C::Api: EthereumRuntimeRPCApi<Block>,
 {
 	let substrate_block_hash = header.hash();
@@ -138,10 +149,15 @@ where
 				.map_err(|e| format!("{:?}", e))?;
 			legacy_block.map(|block| block.into())
 		};
-		let block_hash = block
-			.ok_or_else(|| "Ethereum genesis block not found".to_string())?
-			.header
-			.hash();
+		let block = block
+			.ok_or_else(|| "Ethereum genesis block not found".to_string())?;
+		let base_fee = client
+			.runtime_api()
+			.gas_price(client.info().best_hash).ok();
+		let block_hash = match base_fee {
+			Some(base_fee) => Header1559::new_from_header(block.header.clone(), base_fee).hash(),
+			None => block.header.hash(),
+		};
 		let mapping_commitment = fc_db::kv::MappingCommitment::<Block> {
 			block_hash: substrate_block_hash,
 			ethereum_block_hash: block_hash,

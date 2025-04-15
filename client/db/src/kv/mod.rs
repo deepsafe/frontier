@@ -31,12 +31,13 @@ use scale_codec::{Decode, Encode};
 // Substrate
 pub use sc_client_db::DatabaseSource;
 use sp_blockchain::HeaderBackend;
-use sp_core::{H160, H256};
+use sp_core::H256;
 pub use sp_database::Database;
 use sp_runtime::traits::Block as BlockT;
 // Frontier
-use fc_api::{FilteredLog, TransactionMetadata};
 use fp_storage::{EthereumStorageSchema, PALLET_ETHEREUM_SCHEMA_CACHE};
+
+use crate::TransactionMetadata;
 
 const DB_HASH_LEN: usize = 32;
 /// Hash type that this backend uses for the database.
@@ -65,18 +66,16 @@ pub mod static_keys {
 pub struct Backend<Block: BlockT> {
 	meta: Arc<MetaDb<Block>>,
 	mapping: Arc<MappingDb<Block>>,
-	log_indexer: LogIndexerBackend<Block>,
 }
 
 #[async_trait::async_trait]
-impl<Block: BlockT> fc_api::Backend<Block> for Backend<Block> {
+impl<Block: BlockT> crate::BackendReader<Block> for Backend<Block> {
 	async fn block_hash(
 		&self,
 		ethereum_block_hash: &H256,
 	) -> Result<Option<Vec<Block::Hash>>, String> {
 		self.mapping().block_hash(ethereum_block_hash)
 	}
-
 	async fn transaction_metadata(
 		&self,
 		ethereum_transaction_hash: &H256,
@@ -84,29 +83,18 @@ impl<Block: BlockT> fc_api::Backend<Block> for Backend<Block> {
 		self.mapping()
 			.transaction_metadata(ethereum_transaction_hash)
 	}
-
-	fn log_indexer(&self) -> &dyn fc_api::LogIndexerBackend<Block> {
-		&self.log_indexer
-	}
-}
-
-#[derive(Clone, Default)]
-pub struct LogIndexerBackend<Block>(PhantomData<Block>);
-
-#[async_trait::async_trait]
-impl<Block: BlockT> fc_api::LogIndexerBackend<Block> for LogIndexerBackend<Block> {
-	fn is_indexed(&self) -> bool {
-		false
-	}
-
 	async fn filter_logs(
 		&self,
 		_from_block: u64,
 		_to_block: u64,
-		_addresses: Vec<H160>,
+		_addresses: Vec<sp_core::H160>,
 		_topics: Vec<Vec<Option<H256>>>,
-	) -> Result<Vec<FilteredLog<Block>>, String> {
+	) -> Result<Vec<crate::FilteredLog<Block>>, String> {
 		Err("KeyValue db does not index logs".into())
+	}
+
+	fn is_indexed(&self) -> bool {
+		false
 	}
 }
 
@@ -164,7 +152,6 @@ impl<Block: BlockT> Backend<Block> {
 				db: db.clone(),
 				_marker: PhantomData,
 			}),
-			log_indexer: LogIndexerBackend(PhantomData),
 		})
 	}
 
@@ -337,7 +324,7 @@ impl<Block: BlockT> MappingDb<Block> {
 		{
 			let mut metadata = self.transaction_metadata(&ethereum_transaction_hash)?;
 			metadata.push(TransactionMetadata::<Block> {
-				substrate_block_hash: commitment.block_hash,
+				block_hash: commitment.block_hash,
 				ethereum_block_hash: commitment.ethereum_block_hash,
 				ethereum_index: i as u32,
 			});

@@ -22,11 +22,17 @@ pub use ethereum::{
 	AccessListItem, BlockV2 as Block, LegacyTransactionMessage, Log, ReceiptV3 as Receipt,
 	TransactionAction, TransactionV2 as Transaction,
 };
-use ethereum_types::{H160, H256, U256};
+use ethereum::{Header, PartialHeader};
+use ethereum_types::{Bloom, H160, H256, H64, U256};
 use fp_evm::{CallOrCreateInfo, CheckEvmTransactionInput};
 use frame_support::dispatch::{DispatchErrorWithPostInfo, PostDispatchInfo};
 use scale_codec::{Decode, Encode};
 use sp_std::{result::Result, vec::Vec};
+use sha3::{Digest, Keccak256};
+
+extern crate alloc;
+
+type Bytes = alloc::vec::Vec<u8>;
 
 pub trait ValidatedTransaction {
 	fn apply(
@@ -159,5 +165,84 @@ impl From<&Transaction> for TransactionData {
 					.collect(),
 			},
 		}
+	}
+}
+
+
+
+#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(rlp::RlpEncodable, rlp::RlpDecodable)]
+#[cfg_attr(
+feature = "with-codec",
+derive(codec::Encode, codec::Decode, scale_info::TypeInfo)
+)]
+#[cfg_attr(feature = "with-serde", derive(serde::Serialize, serde::Deserialize))]
+/// Ethereum header definition.
+pub struct Header1559 {
+	pub parent_hash: H256,
+	pub ommers_hash: H256,
+	pub beneficiary: H160,
+	pub state_root: H256,
+	pub transactions_root: H256,
+	pub receipts_root: H256,
+	pub logs_bloom: Bloom,
+	pub difficulty: U256,
+	pub number: U256,
+	pub gas_limit: U256,
+	pub gas_used: U256,
+	pub timestamp: u64,
+	pub extra_data: Bytes,
+	pub mix_hash: H256,
+	pub nonce: H64,
+	pub base_fee_per_gas: U256,
+}
+
+impl Header1559 {
+	#[allow(unused)]
+	pub fn new(partial_header: PartialHeader, ommers_hash: H256, transactions_root: H256, base_fee_per_gas: U256) -> Self {
+		Self {
+			parent_hash: partial_header.parent_hash,
+			ommers_hash,
+			beneficiary: partial_header.beneficiary,
+			state_root: partial_header.state_root,
+			transactions_root,
+			receipts_root: partial_header.receipts_root,
+			logs_bloom: partial_header.logs_bloom,
+			difficulty: partial_header.difficulty,
+			number: partial_header.number,
+			gas_limit: partial_header.gas_limit,
+			gas_used: partial_header.gas_used,
+			timestamp: partial_header.timestamp,
+			extra_data: partial_header.extra_data,
+			mix_hash: partial_header.mix_hash,
+			nonce: partial_header.nonce,
+			base_fee_per_gas,
+		}
+	}
+
+	pub fn new_from_header(header: Header, base_fee_per_gas: U256) -> Self {
+		Self {
+			parent_hash: header.parent_hash,
+			ommers_hash: header.ommers_hash,
+			beneficiary: header.beneficiary,
+			state_root: header.state_root,
+			transactions_root: header.transactions_root,
+			receipts_root: header.receipts_root,
+			logs_bloom: header.logs_bloom,
+			difficulty: header.difficulty,
+			number: header.number,
+			gas_limit: header.gas_limit,
+			gas_used: header.gas_used,
+			timestamp: header.timestamp,
+			extra_data: header.extra_data,
+			mix_hash: header.mix_hash,
+			nonce: header.nonce,
+			base_fee_per_gas,
+		}
+	}
+
+	#[must_use]
+	pub fn hash(&self) -> H256 {
+		H256::from_slice(Keccak256::digest(&rlp::encode(self)).as_slice())
 	}
 }

@@ -46,6 +46,7 @@ use fc_rpc_core::{
 };
 use fc_storage::OverrideHandle;
 use fp_rpc::EthereumRuntimeRPCApi;
+use fp_ethereum::Header1559;
 
 #[derive(Debug)]
 pub struct EthereumSubIdProvider;
@@ -100,10 +101,14 @@ where
 
 struct EthSubscriptionResult;
 impl EthSubscriptionResult {
-	pub fn new_heads(block: EthereumBlock) -> PubSubResult {
+	pub fn new_heads(block: EthereumBlock, base_fee: Option<U256>) -> PubSubResult {
+		let hash = match base_fee {
+			Some(base_fee) => H256::from(Header1559::new_from_header(block.header.clone(), base_fee).hash().0),
+			None => H256::from(keccak_256(&rlp::encode(&block.header))),
+		};
 		PubSubResult::Header(Box::new(Rich {
 			inner: Header {
-				hash: Some(H256::from(keccak_256(&rlp::encode(&block.header)))),
+				hash: Some(hash),
 				parent_hash: block.header.parent_hash,
 				uncles_hash: block.header.ommers_hash,
 				author: block.header.beneficiary,
@@ -128,8 +133,12 @@ impl EthSubscriptionResult {
 		block: EthereumBlock,
 		receipts: Vec<ethereum::ReceiptV3>,
 		params: &FilteredParams,
+		base_fee: Option<U256>,
 	) -> Vec<Log> {
-		let block_hash = H256::from(keccak_256(&rlp::encode(&block.header)));
+		let block_hash = match base_fee {
+			Some(base_fee) => H256::from(Header1559::new_from_header(block.header.clone(), base_fee).hash().0),
+			None => H256::from(keccak_256(&rlp::encode(&block.header))),
+		};
 		let mut logs: Vec<Log> = vec![];
 		let mut log_index: u32 = 0;
 		for (receipt_index, receipt) in receipts.into_iter().enumerate() {
@@ -230,6 +239,7 @@ where
 		let sync = self.sync.clone();
 		let overrides = self.overrides.clone();
 		let starting_block = self.starting_block;
+		let client1 = client.clone();
 		let fut = async move {
 			match kind {
 				Kind::Logs => {
@@ -252,7 +262,7 @@ where
 
 								match (receipts, block) {
 									(Some(receipts), Some(block)) => {
-										futures::future::ready(Some((block, receipts)))
+										futures::future::ready(Some((block, receipts, notification)))
 									}
 									_ => futures::future::ready(None),
 								}
@@ -260,11 +270,13 @@ where
 								futures::future::ready(None)
 							}
 						})
-						.flat_map(move |(block, receipts)| {
+						.flat_map(move |(block, receipts, notification)| {
+							let base_fee = client1.runtime_api().gas_price(notification.hash).ok();
 							futures::stream::iter(EthSubscriptionResult::logs(
 								block,
 								receipts,
 								&filtered_params,
+								base_fee,
 							))
 						})
 						.map(|x| PubSubResult::Log(Box::new(x)));
@@ -284,12 +296,18 @@ where
 									.unwrap_or(&overrides.fallback);
 
 								let block = handler.current_block(notification.hash);
-								futures::future::ready(block)
+								match block {
+									Some(block) => futures::future::ready(Some((block, notification))),
+									None => futures::future::ready(None),
+								}
 							} else {
 								futures::future::ready(None)
 							}
 						})
-						.map(EthSubscriptionResult::new_heads);
+						.map(|(block, notification)| {
+							let base_fee = client1.runtime_api().gas_price(notification.hash).ok();
+							EthSubscriptionResult::new_heads(block, base_fee)
+						});
 					sink.pipe_from_stream(stream).await;
 				}
 				Kind::NewPendingTransactions => {

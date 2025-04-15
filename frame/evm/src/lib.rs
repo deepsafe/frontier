@@ -81,7 +81,7 @@ use frame_support::{
 			currency::Currency,
 			fungible::Inspect,
 			imbalance::{Imbalance, OnUnbalanced, SignedImbalance},
-			ExistenceRequirement, Fortitude, Preservation, WithdrawReasons,
+			ExistenceRequirement, Preservation, WithdrawReasons,
 		},
 		FindAuthor, Get, Time,
 	},
@@ -894,7 +894,7 @@ impl<T: Config> Pallet<T> {
 		let nonce = frame_system::Pallet::<T>::account_nonce(&account_id);
 		// keepalive `true` takes into account ExistentialDeposit as part of what's considered liquid balance.
 		let balance =
-			T::Currency::reducible_balance(&account_id, Preservation::Preserve, Fortitude::Polite);
+			T::Currency::reducible_balance(&account_id, Preservation::Preserve, frame_support::traits::tokens::Fortitude::Polite);
 
 		(
 			Account {
@@ -998,7 +998,7 @@ where
 				.unwrap_or_else(|_| C::PositiveImbalance::zero());
 
 			// Make sure this works with 0 ExistentialDeposit
-			// https://github.com/paritytech/substrate/issues/10117
+			// https://github.com/deepsafe/polkadot-sdk/issues/10117
 			// If we tried to refund something, the account still empty and the ED is set to 0,
 			// we call `make_free_balance_be` with the refunded amount.
 			let refund_imbalance = if C::minimum_balance().is_zero()

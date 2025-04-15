@@ -27,11 +27,11 @@ use sc_transaction_pool::ChainApi;
 use sc_transaction_pool_api::InPoolTransaction;
 use sp_api::{ApiExt, ProvideRuntimeApi};
 use sp_blockchain::HeaderBackend;
-use sp_core::hashing::keccak_256;
 use sp_runtime::traits::Block as BlockT;
 // Frontier
 use fc_rpc_core::types::*;
 use fp_rpc::EthereumRuntimeRPCApi;
+use fp_ethereum::Header1559;
 
 use crate::{
 	eth::{transaction_build, BlockInfo, Eth},
@@ -214,11 +214,12 @@ where
 			receipts,
 			statuses,
 			substrate_hash,
+			base_fee,
 			..
 		} = block_info.clone();
 		match (block, statuses, receipts) {
 			(Some(block), Some(statuses), Some(receipts)) => {
-				let block_hash = H256::from(keccak_256(&rlp::encode(&block.header)));
+				let block_hash = H256::from(Header1559::new_from_header(block.header.clone(), base_fee).hash().0);
 				let receipt = receipts[index].clone();
 
 				let (logs, logs_bloom, status_code, cumulative_gas_used, gas_used) =

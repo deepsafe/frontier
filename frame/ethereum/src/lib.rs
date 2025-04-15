@@ -32,7 +32,7 @@ mod tests;
 
 pub use ethereum::{
 	AccessListItem, BlockV2 as Block, LegacyTransactionMessage, Log, ReceiptV3 as Receipt,
-	TransactionAction, TransactionV2 as Transaction,
+	TransactionAction, TransactionV2 as Transaction, EIP1559TransactionMessage,
 };
 use ethereum_types::{Bloom, BloomInput, H160, H256, H64, U256};
 use evm::ExitReason;
@@ -58,7 +58,7 @@ use sp_runtime::{
 use sp_std::{marker::PhantomData, prelude::*};
 // Frontier
 use fp_consensus::{PostLog, PreLog, FRONTIER_ENGINE_ID};
-pub use fp_ethereum::TransactionData;
+pub use fp_ethereum::{Header1559, TransactionData};
 use fp_ethereum::ValidatedTransaction as ValidatedTransactionT;
 use fp_evm::{
 	CallOrCreateInfo, CheckEvmTransaction, CheckEvmTransactionConfig, TransactionValidationError,
@@ -282,10 +282,13 @@ pub mod pallet {
 			}, without_base_extrinsic_weight)
 		})]
 		pub fn transact(
-			origin: OriginFor<T>,
+			_origin: OriginFor<T>,
 			transaction: Transaction,
 		) -> DispatchResultWithPostInfo {
-			let source = ensure_ethereum_transaction(origin)?;
+			// let source = ensure_ethereum_transaction(origin)?;
+			let source = Pallet::<T>::recover_signer(&transaction).ok_or(
+				"bad origin: expected to be an Ethereum transaction"
+			)?;
 			// Disable transact functionality if PreLog exist.
 			assert!(
 				fp_consensus::find_pre_log(&frame_system::Pallet::<T>::digest()).is_err(),
@@ -293,6 +296,29 @@ pub mod pallet {
 			);
 
 			Self::apply_validated_transaction(source, transaction).map(|(post_info, _)| post_info)
+		}
+
+		/// Transact an Ethereum transaction.
+		#[pallet::call_index(1)]
+		#[pallet::weight({
+			let without_base_extrinsic_weight = true;
+			<T as pallet_evm::Config>::GasWeightMapping::gas_to_weight({
+			let transaction_data: TransactionData = transaction.into();
+			transaction_data.gas_limit.unique_saturated_into()
+			}, without_base_extrinsic_weight)
+		})]
+		pub fn transact_unsigned(
+			origin: OriginFor<T>,
+			transaction: Transaction,
+		) -> DispatchResultWithPostInfo {
+			ensure_none(origin)?;
+			// Disable transact functionality if PreLog exist.
+			assert!(
+				fp_consensus::find_pre_log(&frame_system::Pallet::<T>::digest()).is_err(),
+				"pre log already exists; block is invalid",
+			);
+
+			Self::apply_validated_transaction(Default::default(), transaction).map(|(post_info, _)| post_info)
 		}
 	}
 
@@ -371,7 +397,7 @@ impl<T: Config> Pallet<T> {
 		}
 	}
 
-	fn recover_signer(transaction: &Transaction) -> Option<H160> {
+	pub fn recover_signer(transaction: &Transaction) -> Option<H160> {
 		let mut sig = [0u8; 65];
 		let mut msg = [0u8; 32];
 		match transaction {
@@ -427,7 +453,7 @@ impl<T: Config> Pallet<T> {
 		let receipts_root = ethereum::util::ordered_trie_root(
 			receipts.iter().map(ethereum::EnvelopedEncodable::encode),
 		);
-		let partial_header = ethereum::PartialHeader {
+		let mut partial_header = ethereum::PartialHeader {
 			parent_hash: if block_number > U256::zero() {
 				BlockHash::<T>::get(block_number - 1)
 			} else {
@@ -446,25 +472,30 @@ impl<T: Config> Pallet<T> {
 			mix_hash: H256::default(),
 			nonce: H64::default(),
 		};
+		partial_header.timestamp /= 1000;
 		let block = ethereum::Block::new(partial_header, transactions.clone(), ommers);
 
 		CurrentBlock::<T>::put(block.clone());
 		CurrentReceipts::<T>::put(receipts.clone());
 		CurrentTransactionStatuses::<T>::put(statuses.clone());
-		BlockHash::<T>::insert(block_number, block.header.hash());
+		let (base_fee, _) = T::FeeCalculator::min_gas_price();
+		let eth_block_hash = Header1559::new_from_header(block.header.clone(), base_fee).hash();
+		BlockHash::<T>::insert(block_number, eth_block_hash);
 
 		match post_log {
 			Some(PostLogContent::BlockAndTxnHashes) => {
 				let digest = DigestItem::Consensus(
 					FRONTIER_ENGINE_ID,
-					PostLog::Hashes(fp_consensus::Hashes::from_block(block)).encode(),
+					PostLog::Hashes(fp_consensus::Hashes::from_block(block, Some(base_fee))).encode(),
 				);
 				frame_system::Pallet::<T>::deposit_log(digest);
 			}
 			Some(PostLogContent::OnlyBlockHash) => {
+				let (base_fee, _) = T::FeeCalculator::min_gas_price();
+				let eth_block_hash = Header1559::new_from_header(block.header.clone(), base_fee).hash();
 				let digest = DigestItem::Consensus(
 					FRONTIER_ENGINE_ID,
-					PostLog::BlockHash(block.header.hash()).encode(),
+					PostLog::BlockHash(eth_block_hash).encode(),
 				);
 				frame_system::Pallet::<T>::deposit_log(digest);
 			}
@@ -484,7 +515,7 @@ impl<T: Config> Pallet<T> {
 	// Controls that must be performed by the pool.
 	// The controls common with the State Transition Function (STF) are in
 	// the function `validate_transaction_common`.
-	fn validate_transaction_in_pool(
+	pub fn validate_transaction_in_pool(
 		origin: H160,
 		transaction: &Transaction,
 	) -> TransactionValidity {
@@ -710,7 +741,10 @@ impl<T: Config> Pallet<T> {
 
 	/// Get current block hash
 	pub fn current_block_hash() -> Option<H256> {
-		<CurrentBlock<T>>::get().map(|block| block.header.hash())
+		<CurrentBlock<T>>::get().map(|block| {
+			let (base_fee, _) = T::FeeCalculator::min_gas_price();
+			Header1559::new_from_header(block.header.clone(), base_fee).hash()
+		})
 	}
 
 	/// Execute an Ethereum transaction.

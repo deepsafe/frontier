@@ -51,6 +51,7 @@ use fp_rpc::{
 	ConvertTransaction, ConvertTransactionRuntimeApi, EthereumRuntimeRPCApi,
 	RuntimeStorageOverride, TransactionStatus,
 };
+use fp_ethereum::Header1559;
 
 use crate::{
 	cache::EthBlockDataCacheTask, frontier_backend_client, internal_err, public_key,
@@ -80,7 +81,7 @@ pub struct Eth<B: BlockT, C, P, CT, BE, A: ChainApi, CIDP, EC> {
 	is_authority: bool,
 	signers: Vec<Box<dyn EthSigner>>,
 	overrides: Arc<OverrideHandle<B>>,
-	backend: Arc<dyn fc_api::Backend<B>>,
+	backend: Arc<dyn fc_db::BackendReader<B> + Send + Sync>,
 	block_data_cache: Arc<EthBlockDataCacheTask<B>>,
 	fee_history_cache: FeeHistoryCache,
 	fee_history_cache_limit: FeeHistoryCacheLimit,
@@ -100,7 +101,7 @@ where
 	C: ProvideRuntimeApi<B>,
 	C::Api: EthereumRuntimeRPCApi<B>,
 	C: HeaderBackend<B> + StorageProvider<B, BE> + 'static,
-	BE: Backend<B> + 'static,
+	BE: Backend<B>,
 	A: ChainApi<Block = B>,
 {
 	pub fn new(
@@ -111,7 +112,7 @@ where
 		sync: Arc<SyncingService<B>>,
 		signers: Vec<Box<dyn EthSigner>>,
 		overrides: Arc<OverrideHandle<B>>,
-		backend: Arc<dyn fc_api::Backend<B>>,
+		backend: Arc<dyn fc_db::BackendReader<B> + Send + Sync>,
 		is_authority: bool,
 		block_data_cache: Arc<EthBlockDataCacheTask<B>>,
 		fee_history_cache: FeeHistoryCache,
@@ -383,11 +384,11 @@ where
 	}
 
 	fn block_uncles_count_by_hash(&self, hash: H256) -> RpcResult<U256> {
-		self.block_uncles_count_by_hash(hash)
+		self.block_uncles_count_by_hash_inner(hash)
 	}
 
 	fn block_uncles_count_by_number(&self, number_or_hash: BlockNumberOrHash) -> RpcResult<U256> {
-		self.block_uncles_count_by_number(number_or_hash)
+		self.block_uncles_count_by_number_inner(number_or_hash)
 	}
 
 	fn uncle_by_block_hash_and_index(
@@ -395,7 +396,7 @@ where
 		hash: H256,
 		index: Index,
 	) -> RpcResult<Option<RichBlock>> {
-		self.uncle_by_block_hash_and_index(hash, index)
+		self.uncle_by_block_hash_and_index_inner(hash, index)
 	}
 
 	fn uncle_by_block_number_and_index(
@@ -403,7 +404,7 @@ where
 		number_or_hash: BlockNumberOrHash,
 		index: Index,
 	) -> RpcResult<Option<RichBlock>> {
-		self.uncle_by_block_number_and_index(number_or_hash, index)
+		self.uncle_by_block_number_and_index_inner(number_or_hash, index)
 	}
 
 	// ########################################################################
@@ -563,7 +564,12 @@ fn rich_block_build(
 ) -> RichBlock {
 	let (hash, miner, nonce, total_difficulty) = if !is_pending {
 		(
-			Some(hash.unwrap_or_else(|| H256::from(keccak_256(&rlp::encode(&block.header))))),
+			Some(hash.unwrap_or_else(|| {
+				match base_fee {
+					Some(base_fee) => H256::from(Header1559::new_from_header(block.header.clone(), base_fee).hash().0),
+					None => H256::from(keccak_256(&rlp::encode(&block.header))),
+				}
+			})),
 			Some(block.header.beneficiary),
 			Some(block.header.nonce),
 			Some(U256::zero()),
@@ -587,7 +593,7 @@ fn rich_block_build(
 				gas_limit: block.header.gas_limit,
 				extra_data: Bytes(block.header.extra_data.clone()),
 				logs_bloom: block.header.logs_bloom,
-				timestamp: U256::from(block.header.timestamp / 1000),
+				timestamp: U256::from(block.header.timestamp),
 				difficulty: block.header.difficulty,
 				nonce,
 				size: Some(U256::from(rlp::encode(&block.header).len() as u32)),
@@ -668,7 +674,11 @@ fn transaction_build(
 	}
 
 	// Block hash.
-	transaction.block_hash = block.map(|block| block.header.hash());
+	transaction.block_hash = match base_fee {
+		Some(base_fee) => block.map(|block| Header1559::new_from_header(block.header.clone(), base_fee).hash()),
+		None => block.map(|block| block.header.hash()),
+	};
+
 	// Block number.
 	transaction.block_number = block.map(|block| block.header.number);
 	// Transaction index.

@@ -50,7 +50,8 @@ use pallet_ethereum::{
 	TransactionData,
 };
 use pallet_evm::{
-	Account as EVMAccount, EnsureAccountId20, FeeCalculator, IdentityAddressMapping, Runner,
+	Account as EVMAccount, EnsureAccountId20, FeeCalculator,
+	IdentityAddressMapping, Runner,
 };
 
 // A few exports that help ease life for downstream crates.

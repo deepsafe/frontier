@@ -29,6 +29,7 @@ fc-db = { workspace = true, default-features = false }
 fc-storage = { workspace = true }
 fp-consensus = { workspace = true, features = ["default"] }
 fp-rpc = { workspace = true, features = ["default"] }
+fp-ethereum = { workspace = true, features = ["default"] }
 
 [dev-dependencies]
 ethereum = { workspace = true }
