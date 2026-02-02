@@ -15,7 +15,7 @@ use sp_std::vec::Vec;
 use fp_rpc_evm_tracing_events::{Event, EvmEvent, GasometerEvent, RuntimeEvent, StepEventFilter};
 
 #[runtime_interface]
-pub trait BifrostExt {
+pub trait DeepsafeExt {
 	fn raw_step(&mut self, _data: Vec<u8>) {}
 
 	fn raw_gas(&mut self, _data: Vec<u8>) {}

@@ -43,7 +43,7 @@ pub mod tracer {
 	impl EvmTracer {
 		pub fn new() -> Self {
 			Self {
-				step_event_filter: fp_ext::bifrost_ext::step_event_filter(),
+				step_event_filter: fp_ext::deepsafe_ext::step_event_filter(),
 			}
 		}
 
@@ -68,7 +68,7 @@ pub mod tracer {
 		}
 
 		pub fn emit_new() {
-			fp_ext::bifrost_ext::call_list_new();
+			fp_ext::deepsafe_ext::call_list_new();
 		}
 	}
 
@@ -77,7 +77,7 @@ pub mod tracer {
 		fn event(&mut self, event: evm::tracing::Event) {
 			let event: EvmEvent = event.into();
 			let message = event.encode();
-			fp_ext::bifrost_ext::evm_event(message);
+			fp_ext::deepsafe_ext::evm_event(message);
 		}
 	}
 
@@ -86,7 +86,7 @@ pub mod tracer {
 		fn event(&mut self, event: evm_gasometer::tracing::Event) {
 			let event: GasometerEvent = event.into();
 			let message = event.encode();
-			fp_ext::bifrost_ext::gasometer_event(message);
+			fp_ext::deepsafe_ext::gasometer_event(message);
 		}
 	}
 
@@ -95,7 +95,7 @@ pub mod tracer {
 		fn event(&mut self, event: evm_runtime::tracing::Event) {
 			let event = RuntimeEvent::from_evm_event(event, self.step_event_filter);
 			let message = event.encode();
-			fp_ext::bifrost_ext::runtime_event(message);
+			fp_ext::deepsafe_ext::runtime_event(message);
 		}
 	}
 }

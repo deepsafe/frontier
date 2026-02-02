@@ -28,24 +28,24 @@ members = [
 	"client/db",
 	"client/storage",
 	"client/mapping-sync",
-	"client/bifrost/evm-tracing",
-	"client/bifrost/rpc-core/types",
-	"client/bifrost/rpc-core/trace",
-	"client/bifrost/rpc-core/debug",
-	"client/bifrost/rpc-core/txpool",
-	"client/bifrost/rpc/debug",
-	"client/bifrost/rpc/trace",
-	"client/bifrost/rpc/txpool",
+	"client/advance/evm-tracing",
+	"client/advance/rpc-core/types",
+	"client/advance/rpc-core/trace",
+	"client/advance/rpc-core/debug",
+	"client/advance/rpc-core/txpool",
+	"client/advance/rpc/debug",
+	"client/advance/rpc/trace",
+	"client/advance/rpc/txpool",
 	"primitives/account",
 	"primitives/consensus",
 	"primitives/dynamic-fee",
 	"primitives/evm",
 	"primitives/rpc",
 	"primitives/self-contained",
-	"primitives/bifrost/ext",
-	"primitives/bifrost/rpc/evm-tracing-events",
-	"primitives/bifrost/rpc/debug",
-	"primitives/bifrost/rpc/txpool",
+	"primitives/advance/ext",
+	"primitives/advance/rpc/evm-tracing-events",
+	"primitives/advance/rpc/debug",
+	"primitives/advance/rpc/txpool",
 	"runtime/evm-tracer",
 	"template/node",
 	"template/runtime",
@@ -100,81 +100,81 @@ tokio = "1.40.0"
 tracing = "0.1.34"
 
 # Substrate Client
-sc-basic-authorship = { git = "https://github.com/bifrost-platform/polkadot-sdk", branch = "bifrost-polkadot-stable2407" }
-sc-block-builder = { git = "https://github.com/bifrost-platform/polkadot-sdk", branch = "bifrost-polkadot-stable2407" }
-sc-chain-spec = { git = "https://github.com/bifrost-platform/polkadot-sdk", branch = "bifrost-polkadot-stable2407" }
-sc-cli = { git = "https://github.com/bifrost-platform/polkadot-sdk", branch = "bifrost-polkadot-stable2407", default-features = false }
-sc-client-api = { git = "https://github.com/bifrost-platform/polkadot-sdk", branch = "bifrost-polkadot-stable2407" }
-sc-client-db = { git = "https://github.com/bifrost-platform/polkadot-sdk", branch = "bifrost-polkadot-stable2407", default-features = false }
-sc-consensus = { git = "https://github.com/bifrost-platform/polkadot-sdk", branch = "bifrost-polkadot-stable2407" }
-sc-consensus-aura = { git = "https://github.com/bifrost-platform/polkadot-sdk", branch = "bifrost-polkadot-stable2407" }
-sc-consensus-grandpa = { git = "https://github.com/bifrost-platform/polkadot-sdk", branch = "bifrost-polkadot-stable2407" }
-sc-consensus-manual-seal = { git = "https://github.com/bifrost-platform/polkadot-sdk", branch = "bifrost-polkadot-stable2407" }
-sc-executor = { git = "https://github.com/bifrost-platform/polkadot-sdk", branch = "bifrost-polkadot-stable2407" }
-sc-keystore = { git = "https://github.com/bifrost-platform/polkadot-sdk", branch = "bifrost-polkadot-stable2407" }
-sc-network = { git = "https://github.com/bifrost-platform/polkadot-sdk", branch = "bifrost-polkadot-stable2407" }
-sc-network-common = { git = "https://github.com/bifrost-platform/polkadot-sdk", branch = "bifrost-polkadot-stable2407" }
-sc-network-sync = { git = "https://github.com/bifrost-platform/polkadot-sdk", branch = "bifrost-polkadot-stable2407" }
-sc-offchain = { git = "https://github.com/bifrost-platform/polkadot-sdk", branch = "bifrost-polkadot-stable2407" }
-sc-rpc = { git = "https://github.com/bifrost-platform/polkadot-sdk", branch = "bifrost-polkadot-stable2407" }
-sc-rpc-api = { git = "https://github.com/bifrost-platform/polkadot-sdk", branch = "bifrost-polkadot-stable2407" }
-sc-service = { git = "https://github.com/bifrost-platform/polkadot-sdk", branch = "bifrost-polkadot-stable2407", default-features = false }
-sc-telemetry = { git = "https://github.com/bifrost-platform/polkadot-sdk", branch = "bifrost-polkadot-stable2407" }
-sc-transaction-pool = { git = "https://github.com/bifrost-platform/polkadot-sdk", branch = "bifrost-polkadot-stable2407" }
-sc-transaction-pool-api = { git = "https://github.com/bifrost-platform/polkadot-sdk", branch = "bifrost-polkadot-stable2407" }
-sc-utils = { git = "https://github.com/bifrost-platform/polkadot-sdk", branch = "bifrost-polkadot-stable2407" }
+sc-basic-authorship = { git = "https://github.com/deepsafe/polkadot-sdk.git", branch = "polkadot-stable2407" }
+sc-block-builder = { git = "https://github.com/deepsafe/polkadot-sdk.git", branch = "polkadot-stable2407" }
+sc-chain-spec = { git = "https://github.com/deepsafe/polkadot-sdk.git", branch = "polkadot-stable2407" }
+sc-cli = { git = "https://github.com/deepsafe/polkadot-sdk.git", branch = "polkadot-stable2407", default-features = false }
+sc-client-api = { git = "https://github.com/deepsafe/polkadot-sdk.git", branch = "polkadot-stable2407" }
+sc-client-db = { git = "https://github.com/deepsafe/polkadot-sdk.git", branch = "polkadot-stable2407", default-features = false }
+sc-consensus = { git = "https://github.com/deepsafe/polkadot-sdk.git", branch = "polkadot-stable2407" }
+sc-consensus-aura = { git = "https://github.com/deepsafe/polkadot-sdk.git", branch = "polkadot-stable2407" }
+sc-consensus-grandpa = { git = "https://github.com/deepsafe/polkadot-sdk.git", branch = "polkadot-stable2407" }
+sc-consensus-manual-seal = { git = "https://github.com/deepsafe/polkadot-sdk.git", branch = "polkadot-stable2407" }
+sc-executor = { git = "https://github.com/deepsafe/polkadot-sdk.git", branch = "polkadot-stable2407" }
+sc-keystore = { git = "https://github.com/deepsafe/polkadot-sdk.git", branch = "polkadot-stable2407" }
+sc-network = { git = "https://github.com/deepsafe/polkadot-sdk.git", branch = "polkadot-stable2407" }
+sc-network-common = { git = "https://github.com/deepsafe/polkadot-sdk.git", branch = "polkadot-stable2407" }
+sc-network-sync = { git = "https://github.com/deepsafe/polkadot-sdk.git", branch = "polkadot-stable2407" }
+sc-offchain = { git = "https://github.com/deepsafe/polkadot-sdk.git", branch = "polkadot-stable2407" }
+sc-rpc = { git = "https://github.com/deepsafe/polkadot-sdk.git", branch = "polkadot-stable2407" }
+sc-rpc-api = { git = "https://github.com/deepsafe/polkadot-sdk.git", branch = "polkadot-stable2407" }
+sc-service = { git = "https://github.com/deepsafe/polkadot-sdk.git", branch = "polkadot-stable2407", default-features = false }
+sc-telemetry = { git = "https://github.com/deepsafe/polkadot-sdk.git", branch = "polkadot-stable2407" }
+sc-transaction-pool = { git = "https://github.com/deepsafe/polkadot-sdk.git", branch = "polkadot-stable2407" }
+sc-transaction-pool-api = { git = "https://github.com/deepsafe/polkadot-sdk.git", branch = "polkadot-stable2407" }
+sc-utils = { git = "https://github.com/deepsafe/polkadot-sdk.git", branch = "polkadot-stable2407" }
 # Substrate Primitive
-sp-api = { git = "https://github.com/bifrost-platform/polkadot-sdk", branch = "bifrost-polkadot-stable2407", default-features = false }
-sp-block-builder = { git = "https://github.com/bifrost-platform/polkadot-sdk", branch = "bifrost-polkadot-stable2407", default-features = false }
-sp-blockchain = { git = "https://github.com/bifrost-platform/polkadot-sdk", branch = "bifrost-polkadot-stable2407" }
-sp-consensus = { git = "https://github.com/bifrost-platform/polkadot-sdk", branch = "bifrost-polkadot-stable2407" }
-sp-consensus-aura = { git = "https://github.com/bifrost-platform/polkadot-sdk", branch = "bifrost-polkadot-stable2407", default-features = false }
-sp-consensus-grandpa = { git = "https://github.com/bifrost-platform/polkadot-sdk", branch = "bifrost-polkadot-stable2407", default-features = false }
-sp-core = { git = "https://github.com/bifrost-platform/polkadot-sdk", branch = "bifrost-polkadot-stable2407", default-features = false }
-sp-crypto-hashing = { git = "https://github.com/bifrost-platform/polkadot-sdk", branch = "bifrost-polkadot-stable2407", default-features = false }
-sp-database = { git = "https://github.com/bifrost-platform/polkadot-sdk", branch = "bifrost-polkadot-stable2407" }
-sp-externalities = { git = "https://github.com/bifrost-platform/polkadot-sdk", branch = "bifrost-polkadot-stable2407", default-features = false }
-sp-genesis-builder = { git = "https://github.com/bifrost-platform/polkadot-sdk", branch = "bifrost-polkadot-stable2407", default-features = false }
-sp-inherents = { git = "https://github.com/bifrost-platform/polkadot-sdk", branch = "bifrost-polkadot-stable2407", default-features = false }
-sp-io = { git = "https://github.com/bifrost-platform/polkadot-sdk", branch = "bifrost-polkadot-stable2407", default-features = false }
-sp-keyring = { git = "https://github.com/bifrost-platform/polkadot-sdk", branch = "bifrost-polkadot-stable2407" }
-sp-offchain = { git = "https://github.com/bifrost-platform/polkadot-sdk", branch = "bifrost-polkadot-stable2407", default-features = false }
-sp-runtime = { git = "https://github.com/bifrost-platform/polkadot-sdk", branch = "bifrost-polkadot-stable2407", default-features = false }
-sp-runtime-interface = { git = "https://github.com/bifrost-platform/polkadot-sdk", branch = "bifrost-polkadot-stable2407", default-features = false }
-sp-session = { git = "https://github.com/bifrost-platform/polkadot-sdk", branch = "bifrost-polkadot-stable2407", default-features = false }
-sp-state-machine = { git = "https://github.com/bifrost-platform/polkadot-sdk", branch = "bifrost-polkadot-stable2407", default-features = false }
-sp-std = { git = "https://github.com/bifrost-platform/polkadot-sdk", branch = "bifrost-polkadot-stable2407", default-features = false }
-sp-storage = { git = "https://github.com/bifrost-platform/polkadot-sdk", branch = "bifrost-polkadot-stable2407", default-features = false }
-sp-timestamp = { git = "https://github.com/bifrost-platform/polkadot-sdk", branch = "bifrost-polkadot-stable2407", default-features = false }
-sp-transaction-pool = { git = "https://github.com/bifrost-platform/polkadot-sdk", branch = "bifrost-polkadot-stable2407", default-features = false }
-sp-version = { git = "https://github.com/bifrost-platform/polkadot-sdk", branch = "bifrost-polkadot-stable2407", default-features = false }
-sp-weights = { git = "https://github.com/bifrost-platform/polkadot-sdk", branch = "bifrost-polkadot-stable2407", default-features = false }
+sp-api = { git = "https://github.com/deepsafe/polkadot-sdk.git", branch = "polkadot-stable2407", default-features = false }
+sp-block-builder = { git = "https://github.com/deepsafe/polkadot-sdk.git", branch = "polkadot-stable2407", default-features = false }
+sp-blockchain = { git = "https://github.com/deepsafe/polkadot-sdk.git", branch = "polkadot-stable2407" }
+sp-consensus = { git = "https://github.com/deepsafe/polkadot-sdk.git", branch = "polkadot-stable2407" }
+sp-consensus-aura = { git = "https://github.com/deepsafe/polkadot-sdk.git", branch = "polkadot-stable2407", default-features = false }
+sp-consensus-grandpa = { git = "https://github.com/deepsafe/polkadot-sdk.git", branch = "polkadot-stable2407", default-features = false }
+sp-core = { git = "https://github.com/deepsafe/polkadot-sdk.git", branch = "polkadot-stable2407", default-features = false }
+sp-crypto-hashing = { git = "https://github.com/deepsafe/polkadot-sdk.git", branch = "polkadot-stable2407", default-features = false }
+sp-database = { git = "https://github.com/deepsafe/polkadot-sdk.git", branch = "polkadot-stable2407" }
+sp-externalities = { git = "https://github.com/deepsafe/polkadot-sdk.git", branch = "polkadot-stable2407", default-features = false }
+sp-genesis-builder = { git = "https://github.com/deepsafe/polkadot-sdk.git", branch = "polkadot-stable2407", default-features = false }
+sp-inherents = { git = "https://github.com/deepsafe/polkadot-sdk.git", branch = "polkadot-stable2407", default-features = false }
+sp-io = { git = "https://github.com/deepsafe/polkadot-sdk.git", branch = "polkadot-stable2407", default-features = false }
+sp-keyring = { git = "https://github.com/deepsafe/polkadot-sdk.git", branch = "polkadot-stable2407" }
+sp-offchain = { git = "https://github.com/deepsafe/polkadot-sdk.git", branch = "polkadot-stable2407", default-features = false }
+sp-runtime = { git = "https://github.com/deepsafe/polkadot-sdk.git", branch = "polkadot-stable2407", default-features = false }
+sp-runtime-interface = { git = "https://github.com/deepsafe/polkadot-sdk.git", branch = "polkadot-stable2407", default-features = false }
+sp-session = { git = "https://github.com/deepsafe/polkadot-sdk.git", branch = "polkadot-stable2407", default-features = false }
+sp-state-machine = { git = "https://github.com/deepsafe/polkadot-sdk.git", branch = "polkadot-stable2407", default-features = false }
+sp-std = { git = "https://github.com/deepsafe/polkadot-sdk.git", branch = "polkadot-stable2407", default-features = false }
+sp-storage = { git = "https://github.com/deepsafe/polkadot-sdk.git", branch = "polkadot-stable2407", default-features = false }
+sp-timestamp = { git = "https://github.com/deepsafe/polkadot-sdk.git", branch = "polkadot-stable2407", default-features = false }
+sp-transaction-pool = { git = "https://github.com/deepsafe/polkadot-sdk.git", branch = "polkadot-stable2407", default-features = false }
+sp-version = { git = "https://github.com/deepsafe/polkadot-sdk.git", branch = "polkadot-stable2407", default-features = false }
+sp-weights = { git = "https://github.com/deepsafe/polkadot-sdk.git", branch = "polkadot-stable2407", default-features = false }
 # Substrate FRAME
-frame-benchmarking = { git = "https://github.com/bifrost-platform/polkadot-sdk", branch = "bifrost-polkadot-stable2407", default-features = false }
-frame-executive = { git = "https://github.com/bifrost-platform/polkadot-sdk", branch = "bifrost-polkadot-stable2407", default-features = false }
-frame-support = { git = "https://github.com/bifrost-platform/polkadot-sdk", branch = "bifrost-polkadot-stable2407", default-features = false }
-frame-system = { git = "https://github.com/bifrost-platform/polkadot-sdk", branch = "bifrost-polkadot-stable2407", default-features = false }
-frame-system-benchmarking = { git = "https://github.com/bifrost-platform/polkadot-sdk", branch = "bifrost-polkadot-stable2407", default-features = false }
-frame-system-rpc-runtime-api = { git = "https://github.com/bifrost-platform/polkadot-sdk", branch = "bifrost-polkadot-stable2407", default-features = false }
-pallet-aura = { git = "https://github.com/bifrost-platform/polkadot-sdk", branch = "bifrost-polkadot-stable2407", default-features = false }
-pallet-balances = { git = "https://github.com/bifrost-platform/polkadot-sdk", branch = "bifrost-polkadot-stable2407", default-features = false }
-pallet-grandpa = { git = "https://github.com/bifrost-platform/polkadot-sdk", branch = "bifrost-polkadot-stable2407", default-features = false }
-pallet-sudo = { git = "https://github.com/bifrost-platform/polkadot-sdk", branch = "bifrost-polkadot-stable2407", default-features = false }
-pallet-timestamp = { git = "https://github.com/bifrost-platform/polkadot-sdk", branch = "bifrost-polkadot-stable2407", default-features = false }
-pallet-transaction-payment = { git = "https://github.com/bifrost-platform/polkadot-sdk", branch = "bifrost-polkadot-stable2407", default-features = false }
-pallet-transaction-payment-rpc = { git = "https://github.com/bifrost-platform/polkadot-sdk", branch = "bifrost-polkadot-stable2407" }
-pallet-transaction-payment-rpc-runtime-api = { git = "https://github.com/bifrost-platform/polkadot-sdk", branch = "bifrost-polkadot-stable2407", default-features = false }
-pallet-utility = { git = "https://github.com/bifrost-platform/polkadot-sdk", branch = "bifrost-polkadot-stable2407", default-features = false }
+frame-benchmarking = { git = "https://github.com/deepsafe/polkadot-sdk.git", branch = "polkadot-stable2407", default-features = false }
+frame-executive = { git = "https://github.com/deepsafe/polkadot-sdk.git", branch = "polkadot-stable2407", default-features = false }
+frame-support = { git = "https://github.com/deepsafe/polkadot-sdk.git", branch = "polkadot-stable2407", default-features = false }
+frame-system = { git = "https://github.com/deepsafe/polkadot-sdk.git", branch = "polkadot-stable2407", default-features = false }
+frame-system-benchmarking = { git = "https://github.com/deepsafe/polkadot-sdk.git", branch = "polkadot-stable2407", default-features = false }
+frame-system-rpc-runtime-api = { git = "https://github.com/deepsafe/polkadot-sdk.git", branch = "polkadot-stable2407", default-features = false }
+pallet-aura = { git = "https://github.com/deepsafe/polkadot-sdk.git", branch = "polkadot-stable2407", default-features = false }
+pallet-balances = { git = "https://github.com/deepsafe/polkadot-sdk.git", branch = "polkadot-stable2407", default-features = false }
+pallet-grandpa = { git = "https://github.com/deepsafe/polkadot-sdk.git", branch = "polkadot-stable2407", default-features = false }
+pallet-sudo = { git = "https://github.com/deepsafe/polkadot-sdk.git", branch = "polkadot-stable2407", default-features = false }
+pallet-timestamp = { git = "https://github.com/deepsafe/polkadot-sdk.git", branch = "polkadot-stable2407", default-features = false }
+pallet-transaction-payment = { git = "https://github.com/deepsafe/polkadot-sdk.git", branch = "polkadot-stable2407", default-features = false }
+pallet-transaction-payment-rpc = { git = "https://github.com/deepsafe/polkadot-sdk.git", branch = "polkadot-stable2407" }
+pallet-transaction-payment-rpc-runtime-api = { git = "https://github.com/deepsafe/polkadot-sdk.git", branch = "polkadot-stable2407", default-features = false }
+pallet-utility = { git = "https://github.com/deepsafe/polkadot-sdk.git", branch = "polkadot-stable2407", default-features = false }
 # Substrate Utility
-frame-benchmarking-cli = { git = "https://github.com/bifrost-platform/polkadot-sdk", branch = "bifrost-polkadot-stable2407" }
-prometheus-endpoint = { package = "substrate-prometheus-endpoint", git = "https://github.com/bifrost-platform/polkadot-sdk", branch = "bifrost-polkadot-stable2407" }
-substrate-build-script-utils = { git = "https://github.com/bifrost-platform/polkadot-sdk", branch = "bifrost-polkadot-stable2407" }
-substrate-frame-rpc-system = { git = "https://github.com/bifrost-platform/polkadot-sdk", branch = "bifrost-polkadot-stable2407" }
-substrate-test-runtime-client = { git = "https://github.com/bifrost-platform/polkadot-sdk", branch = "bifrost-polkadot-stable2407" }
-substrate-wasm-builder = { git = "https://github.com/bifrost-platform/polkadot-sdk", branch = "bifrost-polkadot-stable2407" }
+frame-benchmarking-cli = { git = "https://github.com/deepsafe/polkadot-sdk.git", branch = "polkadot-stable2407" }
+prometheus-endpoint = { package = "substrate-prometheus-endpoint", git = "https://github.com/deepsafe/polkadot-sdk.git", branch = "polkadot-stable2407" }
+substrate-build-script-utils = { git = "https://github.com/deepsafe/polkadot-sdk.git", branch = "polkadot-stable2407" }
+substrate-frame-rpc-system = { git = "https://github.com/deepsafe/polkadot-sdk.git", branch = "polkadot-stable2407" }
+substrate-test-runtime-client = { git = "https://github.com/deepsafe/polkadot-sdk.git", branch = "polkadot-stable2407" }
+substrate-wasm-builder = { git = "https://github.com/deepsafe/polkadot-sdk.git", branch = "polkadot-stable2407" }
 
 # XCM
-xcm = { package = "staging-xcm", git = "https://github.com/bifrost-platform/polkadot-sdk", branch = "bifrost-polkadot-stable2407", default-features = false }
+xcm = { package = "staging-xcm", git = "https://github.com/deepsafe/polkadot-sdk.git", branch = "polkadot-stable2407", default-features = false }
 
 # Arkworks
 ark-bls12-377 = { version = "0.4.0", default-features = false, features = ["curve"] }
@@ -197,14 +197,14 @@ fc-rpc-v2-api = { path = "client/rpc-v2/api" }
 fc-rpc-v2-types = { path = "client/rpc-v2/types" }
 fc-storage = { path = "client/storage" }
 # Frontier BIFROST Client
-fc-evm-tracing = { path = "client/bifrost/evm-tracing" }
-fc-rpc-core-debug = { path = "client/bifrost/rpc-core/debug" }
-fc-rpc-core-trace = { path = "client/bifrost/rpc-core/trace" }
-fc-rpc-core-txpool = { path = "client/bifrost/rpc-core/txpool" }
-fc-rpc-core-types = { path = "client/bifrost/rpc-core/types" }
-fc-rpc-debug = { path = "client/bifrost/rpc/debug" }
-fc-rpc-trace = { path = "client/bifrost/rpc/trace" }
-fc-rpc-txpool = { path = "client/bifrost/rpc/txpool" }
+fc-evm-tracing = { path = "client/advance/evm-tracing" }
+fc-rpc-core-debug = { path = "client/advance/rpc-core/debug" }
+fc-rpc-core-trace = { path = "client/advance/rpc-core/trace" }
+fc-rpc-core-txpool = { path = "client/advance/rpc-core/txpool" }
+fc-rpc-core-types = { path = "client/advance/rpc-core/types" }
+fc-rpc-debug = { path = "client/advance/rpc/debug" }
+fc-rpc-trace = { path = "client/advance/rpc/trace" }
+fc-rpc-txpool = { path = "client/advance/rpc/txpool" }
 # Frontier Primitive
 fp-account = { path = "primitives/account", default-features = false }
 fp-consensus = { path = "primitives/consensus", default-features = false }
@@ -215,10 +215,10 @@ fp-rpc = { path = "primitives/rpc", default-features = false }
 fp-self-contained = { path = "primitives/self-contained", default-features = false }
 fp-storage = { path = "primitives/storage", default-features = false }
 # Frontier BIFROST Primitive
-fp-ext = { path = "primitives/bifrost/ext", default-features = false }
-fp-rpc-debug = { path = "primitives/bifrost/rpc/debug", default-features = false }
-fp-rpc-evm-tracing-events = { path = "primitives/bifrost/rpc/evm-tracing-events", default-features = false }
-fp-rpc-txpool = { path = "primitives/bifrost/rpc/txpool", default-features = false }
+fp-ext = { path = "primitives/advance/ext", default-features = false }
+fp-rpc-debug = { path = "primitives/advance/rpc/debug", default-features = false }
+fp-rpc-evm-tracing-events = { path = "primitives/advance/rpc/evm-tracing-events", default-features = false }
+fp-rpc-txpool = { path = "primitives/advance/rpc/txpool", default-features = false }
 # Frontier Runtime
 evm-tracer = { path = "runtime/evm-tracer", default-features = false }
 # Frontier FRAME
