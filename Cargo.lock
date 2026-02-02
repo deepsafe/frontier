@@ -2060,7 +2060,7 @@ dependencies = [
 [[package]]
 name = "evm"
 version = "0.41.2"
-source = "git+https://github.com/bifrost-platform/evm?branch=bifrost-polkadot-stable2407#e5ae66a5884d8b0914b4872c862dbb92e2bb05f8"
+source = "git+https://github.com/deepsafe/evm?branch=deep-polkadot-stable2407#e5ae66a5884d8b0914b4872c862dbb92e2bb05f8"
 dependencies = [
  "auto_impl",
  "environmental",
@@ -2080,7 +2080,7 @@ dependencies = [
 [[package]]
 name = "evm-core"
 version = "0.41.0"
-source = "git+https://github.com/bifrost-platform/evm?branch=bifrost-polkadot-stable2407#e5ae66a5884d8b0914b4872c862dbb92e2bb05f8"
+source = "git+https://github.com/deepsafe/evm?branch=deep-polkadot-stable2407#e5ae66a5884d8b0914b4872c862dbb92e2bb05f8"
 dependencies = [
  "parity-scale-codec",
  "primitive-types",
@@ -2091,7 +2091,7 @@ dependencies = [
 [[package]]
 name = "evm-gasometer"
 version = "0.41.0"
-source = "git+https://github.com/bifrost-platform/evm?branch=bifrost-polkadot-stable2407#e5ae66a5884d8b0914b4872c862dbb92e2bb05f8"
+source = "git+https://github.com/deepsafe/evm?branch=deep-polkadot-stable2407#e5ae66a5884d8b0914b4872c862dbb92e2bb05f8"
 dependencies = [
  "environmental",
  "evm-core",
@@ -2102,7 +2102,7 @@ dependencies = [
 [[package]]
 name = "evm-runtime"
 version = "0.41.0"
-source = "git+https://github.com/bifrost-platform/evm?branch=bifrost-polkadot-stable2407#e5ae66a5884d8b0914b4872c862dbb92e2bb05f8"
+source = "git+https://github.com/deepsafe/evm?branch=deep-polkadot-stable2407#e5ae66a5884d8b0914b4872c862dbb92e2bb05f8"
 dependencies = [
  "auto_impl",
  "environmental",
